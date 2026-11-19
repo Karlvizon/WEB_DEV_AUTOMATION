@@ -1,0 +1,19 @@
+# Each teammate's OWN data - created on their computer by SETUP / the tracker, never uploaded, never overwritten by a pull
+tracker/*.json
+!tracker/cms_directory.json
+tracker/work_log.md
+tracker/backups/
+tracker/revisions/
+tracker/shift-reports/
+tracker/webapp/jobs/
+tracker/webapp/*.json
+tracker/webapp/dealer_lessons.md
+toolkit/qa_feedback.md
+toolkit/qa_feedback.before-*.md
+my build rules/*
+!my build rules/HOW TO ADD YOUR BUILD MEMORY.md
+backups/
+__pycache__/
+*.pyc
+*.tmp
+.DS_Store

@@ -1,0 +1,17 @@
+{
+  "id": "hc-2026-compass",
+  "prefix": "cmp",
+  "name": "compass",
+  "title": "2026 Jeep Compass",
+  "dealer": "Huston CDJR",
+  "location": "Avon Park, FL",
+  "platform": "dealer-inspire",
+  "cdn": "https://di-uploads-pod34.dealerinspire.com/hustonchryslerdodgejeepram/uploads/2026/11/",
+  "site": "https://www.hustoncdjr.com",
+  "monday_subitem": 13324447533,
+  "figma": {
+    "file": "fgFIdymgtoK1I8ByT5ilu5",
+    "frame": "2:2",
+    "groups": ["2:108", "2:255", "2:398", "2:619", "16:54"]
+  }
+}
