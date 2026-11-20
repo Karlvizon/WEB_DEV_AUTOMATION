@@ -262,6 +262,9 @@ copies new lessons into the team copy (`MLP Automation/qa_feedback.md`, adds onl
 - Rule 2026-11-19 (user): a blog in **For SEO Review** can be published like **For Web Posting** - your turn, Build it, pop-up;
   the chip still says "For SEO Review" (user: "it must still show SEO review but can be publish") with a green
   "can publish" tag. Set in blog_dealers.json "your_turn".
+- Rule 2026-11-20 (user): "If they are seo review and already have a live link we dont need to do them they are
+  consider done". A For SEO Review blog with a Live URL on monday is done: not your turn, no pop-up, listed under
+  "Published / done", grey "done · live" tag instead of "can publish". Code: blogs.is_done (webapp/blogs.py).
 - Side icon "Blogs" (next to Approved). Lists the blog folders in D:\WORK FOLDER\Blogs under the 20 dealerships assigned
   for blogs, numbered as in the assignment list. Buttons per blog: Preview (preview.html), Copy HTML (cms.html), Folder.
 - Dealer list: blog_dealers.json (name, website domains, aliases). A blog goes to the dealer whose website its cms.html
@@ -412,3 +415,66 @@ first, "Decided" / "Revision done" / "BLOCKER" / QA results marked, older folded
 action (Fix it now / Start now / Open upload pack + Mark as posted) + a row of small links. 7 phone header one compact
 row (82 px, icon Start/Stop), tabs fade at the edge. 8 phone: Now box one line ("tap for more"), Since-last-shift one
 line. 9 calmer row padding, even button heights. Styles: the "UI round 2026-11-19" block at the end of index.html.
+
+## Header Refresh button (2026-11-20, user: "there are parts that the MLP tracker is not updated")
+- `Refresh` (header, before Start) -> POST /api/check-now {"full": true} -> watch.json force = "full" -> the watcher runs a
+  FULL refresh (refresh_monday.py) even when the quick signature check sees no change, any time of day. Log reason:
+  "you pressed Refresh" in webapp/jobs/auto-refresh.log. Costs ~10 monday calls per press.
+- Settings > "Check monday now" is unchanged (quick check; full refresh only if something changed).
+- The button is disabled and its arrow spins while the watcher is busy; on phones it shows only the icon.
+- 2026-11-20: city pages are found by NAME too - a subitem named "Place, ST" (regex `,\s*[A-Z]{2}\b`) counts as a city page
+  whatever its parent is called (refresh_monday.to_record). One Legacy Motors' 6 pages sat under "Month 3-4 - We Buy Page
+  [NOV-DEC]" and were skipped because only parents named "City Pages" counted.
+
+## Never silent / connector chip / batch city pages (2026-11-20, user: "go ahead with 1, 2 and 3")
+1. **Couldn't place**: refresh_monday.save_unplaced() writes webapp/unplaced.json = every subitem assigned to the owner
+   that is not a tracker page, not a side task (SIDE_TASKS: Final MLP, Final Mobile Check, Metatags & Metadata, SEO
+   Review, Site Live) and not Approved. All tab shows one amber fold "N assigned tasks ... couldn't place"; "Got it"
+   hides those ids (localStorage). If a new kind of page shows up there, teach to_record() about it.
+2. **Connector chip**: a connector error counts for 24 h; older errors show green with "last error <date>, none since"
+   on hover (the Nov 13 error kept the chip red for a week). Claude still records errors with monday_health.py.
+3. **Batch city pages** (webapp/batch.py, batches.json): dealer row shows
+   - "Build N as a batch" (>=2 not-started city pages under one monday parent, none built) -> action "batch" (sid =
+     parent item id) = build_prompt(first page) + write batch_from_sample.py in the dealer's city-pages folder, then stop.
+   - "Copy <built page> to the other N" (a page of the group is "Claude is done" and others are not started) ->
+     action "batch-copy" = each remaining page from the sample with its own content doc (writes batch_from_sample.py
+     first if missing), SEO fix, QA sweep, Final mobile check, pack, note "Copied from the sample ... (batch)".
+   Turns: 80 + 110 per page (max 900). One Claude job at a time, like Start now.
+
+## Dashboard + sidebar menu (2026-11-20, user: "lets put a dashboard for our automation tracker? And fix UI that is pleasing and easy to navigate")
+- New first tab **Dashboard** (`tab="dash"`, now the landing view; deep links /#all etc. still work). Code: `dashView()` / `dashChart()` in index.html,
+  CSS block "Dashboard + sidebar navigation". Read-only - uses /api/state (items, history, approved, claude_usage) plus /api/qa-report and
+  /api/costs (fetched at most every 5 min). Nothing new on the server.
+- Shows: 5 numbers (Ready to post, Revisions open, With QA, Overdue or Due in 7 days, Approved this week -> each opens its tab), a per-day chart
+  (built/fixed by Claude, QA revision comments, approved; the first tracker day's approval import is left out), Where the pages are (stages),
+  Due next (click = page panel), Dealers with open work (click = dealer card), QA this week + Claude this week. Now & Next shows on it too.
+  The Overdue tile is hidden on the Dashboard only (it has its own).
+- Navigation: >=1180 px the tabs are a labelled left sidebar - search, Dashboard, Work (list tabs + "nothing else to post or fix"), Views
+  (Assigned, Approved, Blogs, SEO review), Reports (QA report, Calendar, Activity), Settings. Below 1180 px the old one-row top bar is unchanged
+  (Dashboard is its first tab). Nothing was removed. Typing in search on the Dashboard jumps to All.
+- How to use: new topic "Dashboard and the menu". Backup of the page before this change: backups/index.before-dashboard-20261120.html
+
+## Spacing check (2026-11-20, user: "lets focus on the thing that will make the job easier and faster" -> fewer QA revisions)
+- qa_sweep.js has one new CHECK (amber, not FIX): "not centred beside its photo" at 1920 - text stuck to the top of a taller photo
+  (QA Auburn #8 "move this content downward to center it"). Tested: catches it on Auburn's before-fix copy, fixed Auburn clean,
+  2 notes on 69 approved/current pages (Escalade, Toyota bZ). Other checks unchanged (old/new output identical on 8 pages).
+- Tried and removed: "uneven section gap" - false alarms on ~50 of 70 approved pages. Spacing gaps need Figma numbers (plan step 3).
+- Lesson added to _mlp-toolkit/qa_feedback.md (Recurring QA points). Old sweep: backups/qa_sweep.before-spacing-20261120.js.
+
+## Spacing vs Figma (2026-11-20, user: "lets proceed with figma key")
+- Settings > Figma connection: the user's own Figma key in %APPDATA%\MLP Tracker\figma_token.txt (settings.figma_token, /api/figma-token,
+  /api/figma-token/test). Read-only, no Claude tokens. Figma keys expire - "Figma refused the key" = make a new one.
+- _mlp-toolkit/tools/figma_layout.py saves <page>/figma/layout.json (desktop frame >=1000px, phone frame 320-500px if any): every text,
+  its box and the space above it. Link from project.json, brief.json, or figma/link.txt (features.save_figma_links copies it from the
+  monday update before every QA check and every Claude run - city pages and newer pages have it only there).
+- qa_sweep.js fetches layout.json by itself when missing (key saved), then CHECK "spacing vs Figma @1920" (amber): texts found once on
+  the page and once in the Figma, gap above off by >= max(16px, 35%). Skipped: dealer vehicle carousel (-car with arrows/dots), sliders,
+  galleries, disclaimers, and gaps QA's 20px rhythm made tighter than the Figma.
+- Test 2026-11-20: Helms before-fix flagged 10 spots (QA: "follow the design in Figma") / fixed version matches; 38 of 69 pages compared,
+  11 approved pages get a note (1-5 spots, real Figma differences QA accepted). 31 pages have no Figma link. City pages use a generic
+  sample Figma (Audi Annapolis) so only ~10 spots match there. No phone frames found in any Figma yet.
+- Figma key expiry (2026-11-20, user: "if the token is nearly expired give notification to the tracker"): Figma's API does not give
+  the expiry, so Settings has "Key expires on" (figma_key.json in %APPDATA%\MLP Tracker; blank = 90 days after saving, shown as a guess).
+  features.figma_key_status -> /api/state "figma_key"; amber line (<=7 days) / red (expired, or figma_refused.txt written by
+  figma_layout.py --check) on Dashboard + All. features.figma_key_alerts (daily_jobs): one --check per day, one pop-up per step
+  (7 days, 1 day, expired, refused; keyed by expiry date in watch.json figma_alerts).

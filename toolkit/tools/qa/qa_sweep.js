@@ -10,6 +10,14 @@ async function sweep(b, dir) {
   if (!fs.existsSync(file)) return [`SKIP no preview.html`];
   const css = fs.readFileSync(file, 'utf8');
   const out = [];
+  // Figma design measurements: saved once per page with the user's Figma key (Settings > Figma connection)
+  const lay = path.join(dir, 'figma', 'layout.json'), fkey = path.join(process.env.APPDATA || '', 'MLP Tracker', 'figma_token.txt');
+  if (!fs.existsSync(lay) && (process.env.FIGMA_TOKEN || fs.existsSync(fkey))) {
+    const r = require('child_process').spawnSync('python', ['-I', path.join(__dirname, '..', 'figma_layout.py'), dir], { encoding: 'utf8', timeout: 120000, windowsHide: true });
+    const msg = ((r.stdout || '') + (r.stderr || '')).trim().split(/\r?\n/).pop();
+    if (msg && !msg.startsWith('OK')) out.push('INFO Figma measurements: ' + msg.replace(/^SKIP\s*/, ''));
+  }
+  let FIG = null; try { FIG = JSON.parse(fs.readFileSync(lay, 'utf8')); } catch (e) { /* no Figma measurements */ }
   // WordPress (3 CMS fields): the JS lives ONLY in the JS field; HTML + CSS may be merged (user, 2026-11-16:
   // "make sure that the js is separated form the HTML but you can merge HTML and css"). One-file pages have no .js field.
   const cf = path.join(dir, 'cms-fields');
@@ -148,8 +156,44 @@ async function sweep(b, dir) {
             if ((a && Math.abs(a.top - toks[k].top) > 3) || (c && Math.abs(c.top - toks[k].top) > 3)) return { t: h.textContent.trim().replace(/\s+/g, ' ').slice(0, 60), s: k <= 2 || toks.length - 1 - k <= 2 }; }
           return null; }).filter(Boolean);
       }
+      // ---- spacing checks (user 2026-11-20: "fewer pages sent back by QA" - QA Auburn / Columbus city pages 2026-11-17:
+      // "Kindly move this content downward to center it", "Add spacing here", "Kindly reduce the spacing here"; Trax / Encore GX:
+      // "Shift this downward so it will be centered", "Center the image"). CHECK lines only until they prove themselves.
+      const visE = (e) => { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return false; const r = R(e); return r.width > 2 && r.height > 2; };
+      const solid = (e) => { const cs = getComputedStyle(e); const c = cs.backgroundColor;
+        return (c !== 'rgba(0, 0, 0, 0)' && c !== 'transparent' && c !== 'rgb(255, 255, 255)') || cs.backgroundImage !== 'none' || /^(IMG|PICTURE|VIDEO|svg|IFRAME|CANVAS)$/i.test(e.tagName) || parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth) > 0 && cs.borderTopStyle !== 'none'; };
+      // the visible "ink" of an element: its own box when it is filled (photo, band, button), else the union of what is inside it
+      const ink = (e, d = 0) => { if (!visE(e)) return null; if (solid(e) || d > 12) { const r = R(e); return { top: r.top, bottom: r.bottom }; }
+        let top = Infinity, bottom = -Infinity; const layered = [];
+        for (const n of e.childNodes) { let b = null;
+          if (n.nodeType === 1 && ['absolute', 'fixed'].includes(getComputedStyle(n).position)) { layered.push(n); if (!n.matches('img,picture,video')) continue; }
+          if (n.nodeType === 3 && n.data.trim()) { const rg = document.createRange(); rg.selectNodeContents(n); const rs = [...rg.getClientRects()].filter((x) => x.height > 0); if (rs.length) b = { top: Math.min(...rs.map((x) => x.top)), bottom: Math.max(...rs.map((x) => x.bottom)) }; }
+          else if (n.nodeType === 1) b = ink(n, d + 1);
+          if (b) { top = Math.min(top, b.top); bottom = Math.max(bottom, b.bottom); } }
+        if (top === Infinity) layered.forEach((n) => { const b = ink(n, d + 1); if (b) { top = Math.min(top, b.top); bottom = Math.max(bottom, b.bottom); } });
+        return top === Infinity ? null : { top, bottom }; };
+      const label = (e) => { const h = e.querySelector('h1,h2,h3,h4,p'); return ((h ? h.innerText : e.innerText) || e.className.split(' ')[0] || e.tagName).replace(/\s+/g, ' ').trim().slice(0, 34); };
+      // 1. text beside a photo not centred (the shorter one should sit in the middle of the taller one)
+      res.offc = [];
+      if (w === 1920) wrap.querySelectorAll('*').forEach((g) => { const cs = getComputedStyle(g);
+        if (!((cs.display.includes('flex') && !cs.flexDirection.startsWith('column')) || cs.display.includes('grid'))) return;
+        const kids = [...g.children].filter(visE); if (kids.length < 2 || kids.length > 4) return;
+        const media = (e) => { const im = e.matches('img,picture,video') ? e : e.querySelector('img,video'); if (!im || !visE(im)) return false; const ri = R(im), re = R(e); return ri.width * ri.height > re.width * re.height * 0.5; };
+        const texty = (e) => !media(e) && (e.innerText || '').trim().length > 30;
+        for (let k = 1; k < kids.length; k++) { const A = kids[k - 1], B = kids[k], ra = R(A), rb = R(B);
+          if (rb.left < ra.right - 2) continue;   // wrapped onto a new line, not side by side
+          if (Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top) < Math.min(ra.height, rb.height) * 0.5) continue;
+          let M, T; if (media(A) && texty(B)) { M = A; T = B; } else if (media(B) && texty(A)) { M = B; T = A; } else continue;
+          const m = ink(M), t = ink(T); if (!m || !t) continue;
+          const big = m.bottom - m.top >= t.bottom - t.top ? m : t, sm = big === m ? t : m, diff = (big.bottom - big.top) - (sm.bottom - sm.top);
+          if (diff < 40) continue;
+          const tg = Math.round(sm.top - big.top), bg_ = Math.round(big.bottom - sm.bottom);
+          if (big === m && tg <= 6 && bg_ >= 40) res.offc.push(`"${label(T)}" text ${Math.max(0, tg)}px from the top, ${bg_}px from the bottom`); } });
       return res; }, w);
     if (r.err) { out.push('SKIP ' + r.err); await ctx.close(); break; }
+    const fr = FIG && (w === 1920 ? FIG.desktop : w === 390 ? FIG.mobile : null);
+    if (fr) { const c = await figCompare(p, fr, w);
+      if (c && c.n) out.push(c.off.length ? `CHECK spacing vs Figma @${w} (${c.off.length} of ${c.n} spots off - match the Figma unless QA asked otherwise): ${c.off.slice(0, 5).map((x) => `above "${x.t}" ${x.pg}px, Figma ${x.fg}px`).join('; ')}${c.off.length > 5 ? ' (+' + (c.off.length - 5) + ' more)' : ''}` : `OK  spacing matches the Figma @${w} (${c.n} spots compared)`); }
     if (r.amp) { const fx = r.amp.filter((x) => x.s), ck = r.amp.filter((x) => !x.s);
       out.push(fx.length ? `FIX "&" splits a short phrase across lines @${w} (QA: "Put the Build & down") - keep it together (e.g. wrap "Build & Price" in a nowrap span or break before it): ${fx.slice(0, 4).map((x) => x.t).join('; ')}` : `OK  no short "&" phrase split in headings @${w}`);
       if (ck.length) out.push(`CHECK "&" at a line break in a long heading @${w} (fine if it reads well): ${ck.slice(0, 4).map((x) => x.t).join('; ')}`); }
@@ -164,6 +208,7 @@ async function sweep(b, dir) {
     if (r.kgap && r.kgap.some((x) => x[2]) && r.kgap.some((x) => !x[2])) { const v = r.kgap.filter((x) => !x[2]).map((x) => x[1]); const mode = v.sort((a, c) => v.filter((y) => y === c).length - v.filter((y) => y === a).length)[0];
       const off = r.kgap.filter((x) => x[2] && Math.abs(x[1] - mode) > 4); out.push(off.length ? `CHECK section label after a CTA bar @${w}: ${off.map((x) => x[0] + ' ' + x[1] + 'px').join(', ')} vs ${mode}px above the other labels (QA Encore GX / Trax: "make sure the spacing here is aligned with other", "shift this downward")` : `OK  labels after CTA bars have the usual gap @${w} (${mode}px)`); }
     if (r.lone) out.push(r.lone.length ? `CHECK lone last card not centred @${w} (QA Encore GX: "Center this"): ${r.lone.slice(0, 4).join('; ')}` : `OK  lone last cards centred @${w}`);
+    if (r.offc) out.push(r.offc.length ? `CHECK not centred beside its photo @${w} (QA Auburn: "move this content downward to center it" - centre it unless the Figma has it at the top): ${[...new Set(r.offc)].slice(0, 4).join('; ')}${r.offc.length > 4 ? ' (+' + (r.offc.length - 4) + ' more)' : ''}` : `OK  text and photos centred side by side @${w}`);
     if (r.seams && w < 1025) out.push(r.seams.length ? `FIX hairline seam risk @${w} (photo stacked on a panel with an unfilled parent): ${[...new Set(r.seams)].join('; ')} - give the parent the panel colour + overflow:hidden + radius, panel margin-top:-1px` : `OK  no photo/panel hairline seam @${w}`);
     if (w === 1920) {
       if (r.title !== undefined) out.push(r.title ? 'OK  MLP content title' : 'CHECK MLP content title missing (add it if the content doc has a title)');
@@ -180,6 +225,55 @@ async function sweep(b, dir) {
     await ctx.close();
   }
   return out;
+}
+
+// ---- spacing vs Figma (user 2026-11-20: "lets proceed with figma key"). figma/layout.json is saved by tools/figma_layout.py with the
+// user's own Figma key (no Claude tokens). Each text that appears exactly once on the page and once in the Figma is matched, and the
+// space above it (to the nearest thing above that is not its own background) is compared, scaled to the page width.
+async function figCompare(p, frame, w) {
+  return p.evaluate(({ frame, w }) => {
+    const wrap = document.querySelector('[class$="-wrap"]'); if (!wrap) return null;
+    const R = (e) => e.getBoundingClientRect();
+    const key = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 60);
+    const visE = (e) => { const cs = getComputedStyle(e); return cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity > 0.02 && R(e).width > 1 && R(e).height > 1; };
+    const filled = (e) => { const cs = getComputedStyle(e), c = cs.backgroundColor;
+      return (c !== 'rgba(0, 0, 0, 0)' && c !== 'transparent' && c !== 'rgb(255, 255, 255)') || cs.backgroundImage !== 'none' || /^(IMG|VIDEO|svg|IFRAME|CANVAS)$/i.test(e.tagName); };
+    // page texts: elements that hold their own text; boxes: those texts + photos + filled boxes
+    const texts = [], boxes = [];
+    wrap.querySelectorAll('*').forEach((e) => { if (!visE(e) || e.closest('[data-clone]')) return;
+      const own = [...e.childNodes].filter((n) => n.nodeType === 3 && n.data.trim()).length > 0;
+      const r = R(e);
+      if (own) { const rg = document.createRange(); rg.selectNodeContents(e); const rs = [...rg.getClientRects()].filter((x) => x.width > 0);
+        const x1 = rs.length ? Math.min(...rs.map((x) => x.left)) : r.left, x2 = rs.length ? Math.max(...rs.map((x) => x.right)) : r.right;
+        const b = { el: e, x: x1, w: x2 - x1, y: r.top + scrollY, h: r.height };
+        if (!['inline', 'inline-block'].includes(getComputedStyle(e).display) || /^H[1-6]$/.test(e.tagName)) texts.push({ ...b, k: key(e.innerText) });
+        boxes.push(b); }
+      else if (filled(e)) boxes.push({ el: e, x: r.left, w: r.width, y: r.top + scrollY, h: r.height }); });
+    const gapAbove = (t) => { let best = null;
+      for (const b of boxes) { if (b.el === t.el || b.el.contains(t.el) || t.el.contains(b.el)) continue;
+        if (b.y + b.h > t.y + 2 || Math.min(t.x + t.w, b.x + b.w) - Math.max(t.x, b.x) <= 0) continue;
+        if (b.x <= t.x && b.y <= t.y && b.x + b.w >= t.x + t.w && b.y + b.h >= t.y + t.h) continue;
+        best = best === null ? b.y + b.h : Math.max(best, b.y + b.h); }
+      return best === null ? null : t.y - best; };
+    const cnt = (arr) => arr.reduce((m, k) => (m[k] = (m[k] || 0) + 1, m), {});
+    const pc = cnt(texts.map((t) => t.k)), fc = cnt(frame.texts.map((t) => key(t.t)));
+    const scale = R(wrap).width / frame.w;
+    const rows = [];
+    // left out on purpose (2026-11-20 test on 38 pages): the dealer vehicle carousel / sliders / galleries (standard blocks, not
+    // drawn per page), disclaimers, and gaps QA's own 20px rhythm sets tighter than the Figma (QA-approved pages do that)
+    const skipBlock = (e) => { for (let a = e; a && a !== wrap; a = a.parentElement) { const c = typeof a.className === 'string' ? a.className : '';
+      if (/carousel|slider|swiper|(^|[-_\s])gal(lery)?($|[-_\s])|-legal|-disc/.test(c)) return true;
+      // the dealer vehicle carousel ("<pre>-car" with arrows/dots); a "-car" block without them is the page's own cards (Helms rh-car)
+      if (/-car($|\s)/.test(c) && a.querySelector('[class*="__dot"],[class*="__arrow"],[class*="__nav"]')) return true; } return false; };
+    for (const t of texts) { if (t.k.length < 6 || pc[t.k] !== 1 || fc[t.k] !== 1) continue;
+      if (skipBlock(t.el) || /^[*†‡¹²³]/.test((t.el.innerText || '').trim())) continue;
+      const f = frame.texts.find((x) => key(x.t) === t.k); if (f.gap === null || f.gap < 0) continue;
+      const pg = gapAbove(t); if (pg === null || pg < 0) continue;
+      const fg = f.gap * scale; if (fg > 400 || pg > 600) continue;   // very tall gaps = layout changes (sliders, galleries), not spacing
+      if (pg >= 14 && pg <= 26 && fg > pg) continue;   // QA's 20px rhythm ("tighten spacing") beats the Figma
+      const diff = pg - fg; rows.push({ t: (t.el.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 34), pg: Math.round(pg), fg: Math.round(fg), off: Math.abs(diff) >= Math.max(16, fg * 0.35) }); }
+    return { n: rows.length, off: rows.filter((r) => r.off) };
+  }, { frame, w });
 }
 
 (async () => {

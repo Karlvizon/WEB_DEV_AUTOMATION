@@ -141,6 +141,59 @@ def save_token(t):
     return None
 
 
+FIGMA_TOKEN_FILE = plat.app_dir() / "figma_token.txt"   # Figma key (2026-11-20): read-only design measurements, no Claude tokens
+
+
+def figma_token():
+    t = os.environ.get("FIGMA_TOKEN", "").strip()
+    if not t and FIGMA_TOKEN_FILE.exists():
+        t = FIGMA_TOKEN_FILE.read_text(encoding="utf-8").strip()
+    return t
+
+
+def save_figma_token(t):
+    t = (t or "").strip()
+    if len(t) < 20 or any(c.isspace() for c in t):
+        return "That doesn't look like a Figma key (it's one long line with no spaces, usually starting with figd_)."
+    FIGMA_TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
+    FIGMA_TOKEN_FILE.write_text(t + chr(10), encoding="utf-8")
+    return None
+
+
+# When the Figma key expires (user, 2026-11-20: "if the token is nearly expired give notification to the tracker").
+# Figma does not tell the API when a key expires, so the date the user saw in Figma is kept here (no secret in it).
+FIGMA_META = plat.app_dir() / "figma_key.json"
+FIGMA_REFUSED = plat.app_dir() / "figma_refused.txt"
+
+
+def figma_meta():
+    try:
+        return json.loads(FIGMA_META.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def save_figma_meta(expires, saved=None):
+    """expires = 'YYYY-MM-DD' from Figma, or '' = not given (then 90 days after saving is assumed and shown as a guess)."""
+    from datetime import date, timedelta
+    m = figma_meta()
+    if saved:
+        m["saved"] = saved
+    m.setdefault("saved", date.today().isoformat())
+    if expires:
+        m["expires"], m["estimated"] = expires, False
+    elif saved or not m.get("expires"):
+        m["expires"], m["estimated"] = (date.fromisoformat(m["saved"]) + timedelta(days=90)).isoformat(), True
+    FIGMA_META.parent.mkdir(parents=True, exist_ok=True)
+    FIGMA_META.write_text(json.dumps(m), encoding="utf-8")
+    return m
+
+
+def figma_hint():
+    t = figma_token()
+    return ("..." + t[-4:]) if t else ""
+
+
 def token_hint():
     t = token()
     return ("..." + t[-4:]) if t else ""

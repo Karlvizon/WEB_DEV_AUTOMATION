@@ -80,6 +80,12 @@ MCACHE = HERE / "blog_monday.json"
 COLS = {"status": "color_mkys6rqp", "date": "date_mkysvqwz", "live": "text_mkyws26", "doc": "file_mkyxkbm6", "writer": "multiple_person_mkys9nyb"}
 YOUR_TURN = ["For Web Posting"]   # the web posting step = ours (2026-11-17); change in blog_dealers.json "your_turn"
 DONE = ["Published"]
+SEO_LIVE = "For SEO Review"   # rule 2026-11-20 (user): For SEO Review + a live link = done, not your turn
+
+
+def is_done(x):
+    st = x.get("status") or ""
+    return st in DONE or (st == SEO_LIVE and bool((x.get("live") or "").strip()))
 MLOCK = threading.Lock()
 
 
@@ -187,12 +193,14 @@ def blogs_by_dealer(fresh=False):
                 b.update(monday=x["url"], status=x["status"], pub=x["date"], live=x.get("live", ""), doc=x.get("doc", ""))
             else:
                 b["nomatch"] = bool(m.get("items"))
-            b["turn"] = b.get("status") in turn
+            b["done"] = is_done(b)
+            b["turn"] = b.get("status") in turn and not b["done"]
         rest = [pick(x) for x in mine if x["url"] not in used]   # on monday, no folder yet
         for x in rest:
-            x["turn"] = x["status"] in turn
-        d["upcoming"] = sorted([x for x in rest if x["status"] not in DONE], key=lambda x: (not x["turn"], x["date"] or "9999"))
-        d["published"] = sorted([x for x in rest if x["status"] in DONE], key=lambda x: x["date"], reverse=True)
+            x["done"] = is_done(x)
+            x["turn"] = x["status"] in turn and not x["done"]
+        d["upcoming"] = sorted([x for x in rest if not x["done"]], key=lambda x: (not x["turn"], x["date"] or "9999"))
+        d["published"] = sorted([x for x in rest if x["done"]], key=lambda x: x["date"], reverse=True)
         d["total"] = len(d["blogs"]) + len(rest)
         yours += sum(1 for x in d["blogs"] + d["upcoming"] if x.get("turn"))
     return {"folder": str(root), "found": root.is_dir(), "dealers": out, "other": other, "your_turn": yours,

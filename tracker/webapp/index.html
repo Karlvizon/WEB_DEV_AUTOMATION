@@ -513,6 +513,8 @@ html[data-theme="dark"] .pc-sep{background:#1D4ED8}
 .mst{box-shadow:0 1px 0 #0000000f}
 .bcanpub{font-size:10.5px;font-weight:700;color:#027A48;background:#ECFDF3;border:1px solid #6CE9A6;border-radius:6px;padding:1px 6px;margin-left:4px;white-space:nowrap}
 html[data-theme="dark"] .bcanpub{color:#6CE9A6;background:#05341f;border-color:#027A48}
+.bcanpub.bdone{color:#475467;background:#F2F4F7;border-color:#D0D5DD}
+html[data-theme="dark"] .bcanpub.bdone{color:#D0D5DD;background:#1D2939;border-color:#475467}
 /* Assigned tab (2026-11-18) */
 .arow{padding:7px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:5px}.arow:first-of-type{border-top:0}
 .arow .atl{display:flex;gap:8px;align-items:baseline}.arow .atl b{line-height:1.35}.arow .atl .ctag{margin-left:auto;flex:none}
@@ -639,6 +641,92 @@ nav input{min-width:150px;flex:1 1 150px}
 .howto .htb{font-size:13.5px;line-height:1.6;padding:0 4px 10px 20px;color:var(--ink)}.howto .htb ul,.howto .htb ol{margin:4px 0;padding-left:20px}.howto .htb li{margin:3px 0}.howto .htb p{margin:6px 0}
 .setwrap>*,#settings .sbox{min-width:0}.howto .htb{overflow-wrap:anywhere}
 @media (max-width:700px){#settings .ptab{display:block;overflow-x:auto;max-width:100%}#settings .ptab select{max-width:150px}}
+#unplaced{margin:0 0 8px;padding:0 24px}.fkey{margin:8px 0}.unpl.red{background:#FEF3F2;border-color:#F97066;color:#912018}html[data-theme="dark"] .unpl.red{background:#3A1A1A;border-color:#B42318;color:#FECACA}.fkey a{color:inherit;font-weight:700}.unpl{background:#FFF7E6;border:1px solid #F5C26B;border-radius:10px;padding:8px 12px;font-size:13px;color:#7A4B00}
+.unpl summary{cursor:pointer;font-weight:600}.unpl ul{margin:8px 0;padding-left:18px}.unpl li{margin:3px 0}.unpl .sbtn{margin-left:8px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .unpl{background:#3A2A0C;border-color:#8A6420;color:#F5D7A1}}
+:root[data-theme="dark"] .unpl{background:#3A2A0C;border-color:#8A6420;color:#F5D7A1}
+.snow.batch{display:inline-block;margin:0 0 0 10px;background:#6941C6}.snow.batch:hover{background:#53389E}
+.b-refresh{background:rgba(255,255,255,.1)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.b-refresh svg{margin-right:6px;vertical-align:-1px}.b-refresh.busy{opacity:.75;cursor:default}.b-refresh.busy svg{animation:refspin 1s linear infinite}
+@keyframes refspin{to{transform:rotate(360deg)}}
+@media (max-width:700px){.b-refresh .lab{display:none}.b-refresh svg{margin-right:0}}
+/* ===== Dashboard + sidebar navigation (2026-11-20, user: "put a dashboard ... fix UI that is pleasing and easy to navigate") ===== */
+:root{--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--seq:#2a78d6;--seqbg:#EEF2F8}
+html[data-theme="dark"]{--s1:#3987e5;--s2:#d95926;--s3:#199e70;--seq:#3987e5;--seqbg:#232C3E}
+#tabs .ngl,#tabs .ngap{display:none}
+@media (max-width:1179px){#tabs input{order:9}}   /* top-bar layout: search stays at the end of the row, as before */
+#tabs .dashb .ct{display:none}
+.dash{display:flex;flex-direction:column;gap:16px;max-width:1500px}
+.dhead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.dhead h2{margin:0;font-size:22px;letter-spacing:-.02em;color:var(--ink)}
+.dgo{border:0;background:var(--navy);color:#fff;font:inherit;font-weight:700;font-size:13px;padding:9px 16px;border-radius:10px;cursor:pointer}
+.dgo:hover{filter:brightness(1.15)}
+html[data-theme="dark"] .dgo{background:#3B5BDB}
+.dkpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.dk{all:unset;box-sizing:border-box;cursor:pointer;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:2px;border-top:3px solid var(--line);transition:transform .12s,box-shadow .12s}
+.dk:hover{transform:translateY(-2px);box-shadow:var(--shadow2)}.dk:focus-visible{outline:2px solid #4F8DF7}
+.dk.good{border-top-color:#12B76A}.dk.warn{border-top-color:#F79009}.dk.bad{border-top-color:#D92D20}
+.dkn{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.1;color:var(--ink)}
+.dk.bad .dkn{color:#D92D20}html[data-theme="dark"] .dk.bad .dkn{color:#F97066}
+.dkl{font-size:13px;font-weight:700;color:var(--ink)}.dks{font-size:12px;color:var(--muted)}
+.dgrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px}
+.dgrid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.dcard{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;min-width:0}
+.dch{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.dcard h3{margin:0;font-size:14px;font-weight:700;color:var(--ink)}
+.dleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted)}.dleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}.dleg b{color:var(--ink)}
+.dchart{width:100%;height:auto;display:block}
+.dchart .dgl{stroke:var(--line);stroke-width:1}.dchart .dax{font-size:10px;fill:var(--muted)}
+.dchart .dcol:hover rect[fill="transparent"]{fill:var(--soft)}
+.dbars{display:flex;flex-direction:column;gap:4px}
+.dbar{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,42%) 1fr 28px;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:12.5px}
+.dbar:hover{background:var(--soft)}.dbar b{text-align:right;color:var(--ink)}
+.dbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.dbt{height:8px;border-radius:4px;background:var(--seqbg);overflow:hidden}.dbt i{display:block;height:100%;border-radius:4px;background:var(--seq)}
+.dbt.big{height:10px;margin-top:8px}
+.dlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.dlist li{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 6px;border-radius:8px;cursor:pointer;border-bottom:1px solid var(--line)}
+.dlist li:last-child{border-bottom:0}.dlist li:hover{background:var(--soft)}
+.dd{font-size:12px;font-weight:700;color:var(--muted)}
+.dn2{display:flex;flex-direction:column;min-width:0}.dn2 b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dn2 span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dlk{border:0;background:none;color:#3538CD;font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:0}
+html[data-theme="dark"] .dlk{color:#A5B4FC}
+.dempty{color:var(--muted);font-size:13px;padding:14px 4px}
+.dstat{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.dgood{color:#067647;font-weight:700}.dbad{color:#B42318;font-weight:700}
+html[data-theme="dark"] .dgood{color:#47CD89}html[data-theme="dark"] .dbad{color:#F97066}
+.dtypes{list-style:none;margin:0 0 4px;padding:0}.dtypes li{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px dashed var(--line)}.dtypes li:last-child{border:0}
+.dsub{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.dsub h3{margin-bottom:4px}
+@media (max-width:1300px){.dkpis{grid-template-columns:repeat(3,minmax(0,1fr))}.dgrid.three{grid-template-columns:1fr 1fr}}
+@media (max-width:900px){.dgrid,.dgrid.three{grid-template-columns:1fr}.dkpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dkn{font-size:24px}}
+
+/* --- wide screens: the tabs become a labelled sidebar (Work / Views / Reports / Settings) --- */
+@media (min-width:1180px){
+ body{display:grid;grid-template-columns:232px minmax(0,1fr);align-items:start}
+ body>header{grid-column:1/-1;grid-row:1}
+ body>#tabs{grid-column:1;grid-row:2/span 5;position:sticky;top:62px;max-height:calc(100vh - 62px);overflow-y:auto;
+  display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:16px 10px 24px 16px;flex-wrap:nowrap}
+ body>#tiles,body>#unplaced,body>#nownext,body>main{grid-column:2;min-width:0}
+ body>#tiles{grid-row:2}body>#unplaced{grid-row:3}body>#nownext{grid-row:4}body>main{grid-row:5}
+ body>#unplaced:empty,body>#tiles:empty{display:none}
+ body>#unplaced{padding:8px 24px 0 20px}
+ body>#nownext,body>main{padding-left:20px}body>#tiles{padding-left:20px}body>#nownext{margin-top:16px}
+ body>main{padding-top:16px}
+ #tabs .tabbar,#tabs .side{display:flex!important;flex-direction:column;align-items:stretch;gap:1px;padding:6px;flex-wrap:nowrap!important;overflow:visible!important;-webkit-mask-image:none!important;mask-image:none!important;max-width:none}
+ #tabs button{width:100%;justify-content:flex-start;padding:8px 10px!important;font-size:13px;white-space:nowrap}
+ #tabs button .ct{margin-left:auto}
+ #tabs button .newtag{margin-left:4px}
+ #tabs .ib .ibl{display:inline!important;font-size:13px!important}
+ #tabs .ib:not(.lab) .ct{display:none}
+ #tabs .ngl{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 10px 4px}
+ #tabs .side .ngl:first-child,#tabs .tabbar .ngl{padding-top:12px}
+ #tabs .ngap{display:block;height:1px;background:var(--line);margin:8px 6px}
+ #tabs .foldnote{width:100%;text-align:left;white-space:normal!important;font-size:12px!important}
+ #tabs input{position:static!important;flex:none!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0 0 4px!important;padding:9px 12px 9px 34px!important;color:var(--ink)!important;cursor:text!important;background-position:11px 50%!important}
+ #tabs input::placeholder{color:var(--muted)!important}
+}
+html[data-theme="dark"] #tabs input{background:#111827 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2398A2B3' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 4 4'/%3E%3C/svg%3E") no-repeat 11px 50%!important}
+@media (min-width:1180px) and (max-height:700px){#tabs button{padding:6px 10px!important}}
 </style>
 </head>
 <body>
@@ -649,11 +737,13 @@ nav input{min-width:150px;flex:1 1 150px}
   <div class="ctl">
     <span id="job" onclick="toggleLog()"></span><span id="sess" style="display:none;font-size:12px;background:rgba(255,255,255,.12);border-radius:999px;padding:6px 12px"></span>
     <button class="theme" id="bTheme" onclick="cycleTheme()">◐ Auto</button>
+    <button class="b-refresh" id="bRefresh" onclick="refreshNow()" title="Re-read everything from monday now (use it when the tracker looks behind monday)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg><span class="lab">Refresh</span></button>
     <button class="b-start" id="bStart" onclick="run('start')" title="Claude Code works the queue: revisions first, then Assigned MLPs"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M1 1l9 5-9 5z" fill="#fff"/></svg>Start</button>
     <button class="b-stop" id="bStop" onclick="run('stop')" title="Stop the automation and halt any running Claude job"><svg width="10" height="10"><rect width="10" height="10" rx="2" fill="#fff"/></svg>Stop</button>
   </div>
 </header>
 <div class="tiles" id="tiles"></div>
+<div id="unplaced"></div>
 <nav id="tabs"></nav>
 <section id="nownext" style="display:none"></section>
 <main id="view"></main>
@@ -667,7 +757,7 @@ const MC={"Assigned":"var(--assigned)","Working on it":"var(--working)","Waiting
 const CC={"Claude working on it":"#FCE4D6","Claude is done":"#C6EFCE","Revision needed":"#F4B6C2","Not started":"#F2F2F2"};
 const NOT_POSTED=["Assigned","Working on it","Needs Revision"];
 const WAITING=["Waiting for Review","On-Hold","Approved"];
-let D=null,V=0,tab="all",q="",openSid=null;
+let D=null,V=0,tab="dash",q="",openSid=null;
 const $=s=>document.querySelector(s);
 const SV=d=>`<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const ICON={claude:SV('<path d="M3 4.5l3.5 3.5L3 11.5"/><path d="M8.5 11.5H13"/>'),approved:SV('<circle cx="8" cy="8" r="6.3"/><path d="M5.2 8.2l2 2 3.7-4"/>'),calendar:SV('<rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/>'),
@@ -676,6 +766,7 @@ const ICON={claude:SV('<path d="M3 4.5l3.5 3.5L3 11.5"/><path d="M8.5 11.5H13"/>
  assigned:SV('<rect x="2.5" y="3" width="11" height="11" rx="1.5"/><path d="M5 3V1.8h6V3M5 7h6M5 10h4"/>'),
  blogs:SV('<path d="M3 2.5h10v11H3z"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3"/>'),
  seo:SV('<circle cx="7" cy="7" r="4.3"/><path d="M10.2 10.2L14 14M5 7.2l1.4 1.4L9 6"/>'),
+ dash:SV('<rect x="2" y="2" width="5" height="6" rx="1.2"/><rect x="9" y="2" width="5" height="3.5" rx="1.2"/><rect x="2" y="10" width="5" height="4" rx="1.2"/><rect x="9" y="7.5" width="5" height="6.5" rx="1.2"/>'),
  note:SV('<path d="M3 2.5h7l3 3v8H3z"/><path d="M5.5 7h5M5.5 9.5h5"/>')};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const file=p=>"/file?p="+encodeURIComponent(p);
@@ -739,7 +830,7 @@ function remind(sids){const n=sids.length;
 async function vsc(dealer,type){const j=await (await fetch("/api/vscode",{method:"POST",body:JSON.stringify({dealer,type})})).json();toast(j.ok?j.msg:j.error)}
 const ccBtn=t=>`<button class="ccb" title="Open in Claude Code (VS Code) - ${typeof t==="object"?"the dealer folder":"this page's folder"}, with the details typed in" onclick="event.stopPropagation();openClaude(${esc(JSON.stringify(t))})">${ICON.claude}</button>`;   // 2026-11-19
 const vsBtn=(d,t)=>`<button class="vs" title="Open this dealer's folder in VS Code" onclick="event.stopPropagation();vsc(${esc(JSON.stringify(d))},'${t||"MLP"}')">VS Code</button>`;
-const TABS=[["all","All",i=>true],["post","Ready to post",i=>doneNotPosted(i)],
+const TABS=[["dash","Dashboard",null],["all","All",i=>true],["post","Ready to post",i=>doneNotPosted(i)],
  ["revision","Final MLP revision",isMlpRev],["mobile","Mobile revision",isMobRev],["city","City Pages",i=>i.type==="City Page"],["review","Waiting for Review",i=>i.status==="Waiting for Review"],
  ["approved","Approved",null],["assigned","Assigned",null],["blogs","Blogs",null],["seo","SEO review",null],["qareport","QA report",null],["calendar","Calendar",null],["activity","Activity",null],["settings","Settings",null]];
 async function load(){const r=await fetch("/api/state");D=await r.json();V=D.v;updNotice();usageChip();if(!BLOGS)loadBlogs().then(()=>{if(BLOGS)render()});loadAsg().then(()=>{if(ASG)render()});loadSeo().then(()=>{if(SEO)render()});render();if(openSid)openItem(openSid,true);loadSince()}
@@ -758,11 +849,49 @@ function jobText(j){if(!j.running)return null;if(!j.claude)return "Refreshing fr
 function showWatch(w){showHealth(w);const e=$("#watch");if(!w){e.textContent="";return}
  e.textContent=!w.enabled?"Auto-update off":w.busy?"Checking monday…":!w.in_window?"Auto-update waits for your shift":`Auto-update on · last check ${String(w.last_check||"").slice(11,16)||"-"}${w.error?" (error)":""}`;
  e.title=(w.error?"Last error: "+w.error+"\n":"")+(w.last_change?"Last change found: "+w.last_change+" - "+(w.last_result||""):"No change found yet")}
-function showHealth(w){const e=$("#mhealth");if(!e)return;if(!w){e.innerHTML="";return}
+// #1 (2026-11-20): monday tasks assigned to you that the tracker could not place - one amber line, never silent.
+function showUnplaced(){const e=$("#unplaced");if(!e)return;const u=(D&&D.unplaced&&D.unplaced.items)||[];
+ let seen=[];try{seen=JSON.parse(localStorage.getItem("unplacedSeen")||"[]")}catch(x){}
+ const show=u.filter(x=>!seen.includes(x.subitem_id));if(!show.length||tab!=="all"){e.innerHTML=figmaNote();return}
+ e.innerHTML=figmaNote()+`<details class="unpl"><summary>${show.length} assigned task${show.length>1?"s":""} on monday the tracker couldn't place – check</summary><ul>${show.map(x=>
+  `<li><b>${esc(x.dealer)}</b> – ${esc(x.name)} <span class="grey">(${esc(x.parent)} · ${esc(x.status)})</span> <a href="https://a3-brands.monday.com/boards/${x.board_id}/pulses/${x.item_id}" target="_blank">Open on monday</a></li>`).join("")}</ul>
+  <div class="small">These are not pages the tracker knows how to work. If one is a page, tell Claude in VS Code so the tracker learns it. <button class="sbtn alt" onclick="unplacedOk()">Got it - hide these</button></div></details>`}
+function unplacedOk(){const u=((D&&D.unplaced&&D.unplaced.items)||[]).map(x=>x.subitem_id);let seen=[];try{seen=JSON.parse(localStorage.getItem("unplacedSeen")||"[]")}catch(x){}
+ try{localStorage.setItem("unplacedSeen",JSON.stringify([...new Set([...seen,...u])]))}catch(x){}showUnplaced()}
+// #3 (2026-11-20): batch city pages - step 1 Claude builds the first page as a sample, you look at it,
+// step 2 "Copy sample" makes the others from it with their own content docs (cheaper than full builds).
+function batchBtns(dealer){const its=((D&&D.state&&D.state.items)||[]).filter(i=>i.dealer===dealer&&i.type==="City Page");const B=(D&&D.batches)||{};
+ const by={};its.forEach(i=>{(by[i.item_id]=by[i.item_id]||[]).push(i)});let h="";
+ for(const pid in by){const pend=by[pid].filter(isPending),b=B[pid];
+  if(b&&b.sample_done&&b.todo&&b.todo.length)h+=`<button class="snow batch" onclick="event.stopPropagation();batchCopy('${pid}')" title="Claude makes the other ${b.todo.length} pages from the sample ${esc(b.sample_name||"")}, each with its own content doc">Copy sample to the other ${b.todo.length}</button>`;
+  else if(b&&b.sample_claude==="Claude working on it")h+=`<span class="cnt">batch sample being built</span>`;
+  else if(pend.length&&by[pid].some(i=>i.claude==="Claude is done")){const s=by[pid].filter(i=>i.claude==="Claude is done").sort((a,b)=>a.subitem_id-b.subitem_id).pop();
+   h+=`<button class="snow batch" onclick="event.stopPropagation();batchCopy('${pid}',${esc(JSON.stringify(s.mlp))},${pend.length})" title="Claude makes the other ${pend.length} page${pend.length>1?"s":""} from ${esc(s.mlp)} (already built), each with its own content doc">Copy ${esc(s.mlp)} to the other ${pend.length}</button>`}
+  else if(pend.length>=2)h+=`<button class="snow batch" onclick="event.stopPropagation();batchStart('${pid}')" title="Claude builds ${esc(pend[0].mlp)} first as a sample; you check it, then copy it to the other ${pend.length-1}">Build ${pend.length} as a batch</button>`}
+ return h}
+async function batchStart(pid){const pend=((D.state||{}).items||[]).filter(i=>String(i.item_id)===String(pid)&&i.type==="City Page"&&isPending(i)).sort((a,b)=>a.subitem_id-b.subitem_id);
+ if(!pend.length)return;if(!usageOk("Building the batch sample"))return;
+ if(JOBST&&JOBST.running&&JOBST.claude)return toast("Claude is already working - wait or press Stop");
+ if(!confirm(`Build these ${pend.length} pages as a batch?\n\nStep 1 (now): Claude builds ${pend[0].dealer} - ${pend[0].mlp} as the sample, with a copy script for the others, then stops.\nStep 2 (after you check the sample): press "Copy sample to the other ${pend.length-1}" on the dealer row.\n\nIt uses Claude tokens.`))return;
+ const j=await (await fetch("/api/run",{method:"POST",body:JSON.stringify({action:"batch",sid:pid})})).json();toast(j.ok?j.msg:j.error,3500);poll();load()}
+async function batchCopy(pid,sname,n){const b=(D.batches||{})[pid]||{dealer:(((D.state||{}).items||[]).find(i=>String(i.item_id)===String(pid))||{}).dealer||"",sample_name:sname,todo:{length:n}};if(!usageOk("Copying the batch"))return;
+ if(JOBST&&JOBST.running&&JOBST.claude)return toast("Claude is already working - wait or press Stop");
+ if(!confirm(`Copy the sample to the other ${b.todo.length} pages?\n\nSample: ${b.dealer} - ${b.sample_name}\n\nClaude makes each page from the sample with its own content doc, then runs the SEO fix, QA check, Final mobile check and upload pack for each. It uses Claude tokens.`))return;
+ const j=await (await fetch("/api/run",{method:"POST",body:JSON.stringify({action:"batch-copy",sid:pid})})).json();toast(j.ok?j.msg:j.error,3500);poll();load()}
+// header Refresh (user 2026-11-20: "there are parts that the tracker is not updated") - full re-read, spins while busy
+let REF_WAIT=0;
+async function refreshNow(){const j=await spost("/api/check-now",{full:true});toast(j.ok?j.msg:j.error,3500);REF_WAIT=Date.now();refBtn();poll()}
+function refBtn(w){const b=$("#bRefresh");if(!b)return;if(w&&w.busy)REF_WAIT=0;const on=(w&&w.busy)||(REF_WAIT&&Date.now()-REF_WAIT<20000);
+ b.classList.toggle("busy",!!on);b.disabled=!!on}
+function showHealth(w){refBtn(w);const e=$("#mhealth");if(!e)return;if(!w){e.innerHTML="";return}
  const upd=w.busy?"checking…":w.last_check?String(w.last_check).slice(11,16):"";
  const lc=w.last_check?new Date(w.last_check.replace(" ","T")):null,age=lc?(Date.now()-lc)/60000:1e9;
  const tok=!w.enabled?["off","Token: auto-update off"]:w.error?["bad","Token: last check failed - "+w.error]:(w.in_window&&age>15)?["warn","Token: no check for "+Math.round(age)+" min"]:["ok","Token: OK, last check "+String(w.last_check||"").slice(11,16)];
- const c=w.connector,con=!c?["off","Connector: no result recorded yet"]:c.state==="ok"?["ok","Connector: OK ("+String(c.at).slice(11,16)+")"]:["bad","Connector: failing since "+String(c.at).slice(5,16)+" - "+(c.msg||"")];
+ const c=w.connector,cAge=c&&c.at?(Date.now()-new Date(String(c.at).replace(" ","T")))/36e5:0;
+ // 2026-11-20 #2: the Nov 13 connector error kept the chip red for a week while monday worked fine. An error counts
+ // for 24 h; after that it is shown as old (hover) - the tracker itself reads monday with your token.
+ const con=!c?["off","Connector: no result recorded yet"]:c.state==="ok"?["ok","Connector: OK ("+String(c.at).slice(11,16)+")"]:
+  cAge>24?["ok","Connector: last error "+String(c.at).slice(5,16)+", none since (only Claude runs use it)"]:["bad","Connector: failing since "+String(c.at).slice(5,16)+" - "+(c.msg||"")];
  const worst=["bad","warn","off","ok"].find(x=>tok[0]===x||con[0]===x)||"ok";   // one dot (user 2026-11-17: simpler header); hover = details
  e.innerHTML=`<span class="mh"><b>monday</b><i class="${worst}"></i>${worst==="ok"?"OK":worst==="bad"?"needs a look":"…"}${upd?`<span class="mup">· ${upd}</span>`:""}</span>`;
  e.title=($("#meta")?$("#meta").textContent+"\n":"")+tok[1]+"\n"+con[1]+"\n"+($("#watch")?$("#watch").textContent:"")+"\n(token = tracker refresh; connector = Claude jobs)"}
@@ -789,7 +918,7 @@ function claudeQueue(){const items=((D&&D.state)||{}).items||[];
  const rank=i=>i.next==="Now"||i.claude==="Claude working on it"?0:i.claude==="Revision needed"?1:2;
  const num=i=>/^\d+$/.test(String(i.next||""))?+i.next:999;
  return items.filter(inQ).sort((a,b)=>rank(a)-rank(b)||num(a)-num(b)||String(a.due||"9").localeCompare(String(b.due||"9"))||a.dealer.localeCompare(b.dealer))}
-function showNowNext(){const e=$("#nownext");if(!e)return;if(tab!=="all"||!D){e.style.display="none";return}e.style.display="block";
+function showNowNext(){const e=$("#nownext");if(!e)return;if(!["all","dash"].includes(tab)||!D){e.style.display="none";return}e.style.display="block";
  const j=JOBST||{},run=j.running&&j.claude,pr=run?j.progress:null,q=claudeQueue();
  const curName=pr?pr.page:run&&j.page?j.page:"";
  const cur=q.find(i=>curName&&curName===i.dealer+" - "+i.mlp)||(run?q.find(i=>i.next==="Now"||i.claude==="Claude working on it"):null);
@@ -968,8 +1097,9 @@ function render(){
  autoBadge();
  $("#meta").textContent=`${st.owner||""} · monday read ${String(st.refreshed_at||"-").slice(5)} · read-only`;
  if(st.owner){const ini=st.owner.split(/\s+/).filter(Boolean),ab=(ini[0]||"")[0]+((ini[ini.length-1]||"")[0]||"");$("#me").innerHTML=`<i>${esc(ab.toUpperCase())}</i><span>${esc(st.owner)}</span>`;$("#me").title=st.owner+" - your monday account (tracker is read-only on monday)";document.title="Web Dev Tracker · "+st.owner}
- const tiles=[["Overdue",items.filter(overdueUs).length,"#D92D20","calendar","Past the due date and still on our side"]].filter(t=>t[1]);   // only Overdue, only when something is late (user, 2026-11-16)
+ const tiles=[["Overdue",items.filter(overdueUs).length,"#D92D20","calendar","Past the due date and still on our side"]].filter(t=>t[1]&&tab!=="dash");   // only Overdue, only when something is late (user, 2026-11-16)
  $("#tiles").innerHTML=tiles.map(t=>`<div class="tile${t[1]?"":" zero"}" style="--c:${t[2]}" title="${t[4]||""}" onclick="go('${t[3]}')"><div class="n">${t[1]}</div><div class="l">${t[0]}</div></div>`).join("");
+ showUnplaced();
  const side=["approved","assigned","blogs","seo","qareport","calendar","activity","settings"];
  // to-do tabs fold away when empty, with one "nothing to post or fix" note; a tab that comes back gets NEW (user, 2026-11-17)
  const cnt=k=>{const t=TABS.find(x=>x[0]===k);return t&&t[2]?items.filter(t[2]).length:0};
@@ -978,11 +1108,12 @@ function render(){
  const tb=([k,l,f])=>{const n=f?items.filter(f).length:(k==="approved"?(st.approved||[]).length:"");return `<button class="${tab===k?"on":""}${n===0&&tab!==k?" zero":""}${isNew(k)?" tnew":""}" title="${n===0?"Nothing here right now - it fills by itself from monday":isNew(k)?"New since you last looked":""}" onclick="go('${k}')">${l}${n!==""?`<span class="ct">${n}</span>`:""}${isNew(k)?'<span class="newtag">NEW</span>':""}</button>`};
  FOLD.forEach(k=>{if(!cnt(k)&&TSEEN[k]){TSEEN[k]=0;saveSeen()}});
  const empty=FOLD.filter(k=>!cnt(k)&&tab!==k),names=empty.map(k=>TABS.find(x=>x[0]===k)[1]);
- const shown=TABS.filter(t=>!side.includes(t[0])&&(SHOWEMPTY||!empty.includes(t[0])));
+ const shown=TABS.filter(t=>t[0]!=="dash"&&!side.includes(t[0])&&(SHOWEMPTY||!empty.includes(t[0])));
  const note=empty.length?`<button class="foldnote" onclick="SHOWEMPTY=!SHOWEMPTY;render()" title="${SHOWEMPTY?"Hide the empty tabs again":"Empty right now: "+esc(names.join(", "))+" - click to show them"}">${SHOWEMPTY?"hide empty tabs":empty.length===FOLD.length?"nothing to post or fix ✓":"nothing else to post or fix ✓"}</button>`:"";
  const ib=([k,l])=>{const n=k==="approved"?(st.approved||[]).length:k==="assigned"&&ASG?asgCount():k==="blogs"&&BLOGS&&BLOGS.your_turn?BLOGS.your_turn:k==="seo"&&SEO&&SEO.to_review?SEO.to_review:"";return `<button class="ib ${tab===k?"on":""}${n!==""?" lab":""}" title="${l}${n!==""?" ("+n+")":""}" onclick="go('${k}')">${ICON[k]}<span class="ibl">${l}</span>${n!==""?`<span class="ct">${n}</span>`:""}</button>`};
- $("#tabs").innerHTML='<div class="tabbar">'+shown.map(tb).join("")+note+'</div><div class="side">'+TABS.filter(t=>side.includes(t[0])).map(ib).join("")+'</div>'+
-  `<input placeholder="Search dealer, MLP, notes..." value="${esc(q)}" oninput="q=this.value;renderView()">`;
+ const grp=t=>`<span class="ngl">${t}</span>`,sb=ks=>TABS.filter(t=>ks.includes(t[0])).map(ib).join("");   // group labels show in the wide-screen sidebar (2026-11-20)
+ const dashB=`<button class="dashb ${tab==="dash"?"on":""}" onclick="go('dash')" title="Dashboard - the whole picture at a glance">${ICON.dash}<span>Dashboard</span></button>`;
+ $("#tabs").innerHTML=`<input placeholder="Search dealer, MLP, notes..." value="${esc(q)}" oninput="searchIn(this)">`+'<div class="tabbar">'+dashB+grp("Work")+shown.map(tb).join("")+note+'</div><div class="side">'+grp("Views")+sb(["assigned","approved","blogs","seo"])+grp("Reports")+sb(["qareport","calendar","activity"])+'<span class="ngap"></span>'+sb(["settings"])+'</div>';
  if(tab!=="settings"||!$("#settings"))renderView();   // never redraw the Settings form under your typing
 }
 function go(k){if(tab==="settings"&&k!=="settings"&&SDIRTY&&!confirm("You have unsaved settings. Leave without saving?"))return;tab=k;SDIRTY=false;
@@ -992,6 +1123,7 @@ const FOLD=["post","revision","mobile"];let TSEEN=null,SHOWEMPTY=false;
 function saveSeen(){try{localStorage.tseen=JSON.stringify(TSEEN)}catch(e){}}
 function renderView(){
  const st=D.state||{};showNowNext();
+ if(tab==="dash")return dashView();
  if(tab==="approved")return approvedView(st.approved||[]);
  if(tab==="activity")return activityView();
  if(tab==="settings")return settingsView();
@@ -1018,7 +1150,7 @@ function renderView(){
     last=i.dealer;gshut=false;h+=withDealer(sg.compact?rowCompact(i):rowFull(i),i);continue}
    if(i.dealer!==last){const g=part.filter(r=>r.dealer===i.dealer),n=g.length;
     // big batches (e.g. 11 city pages) start folded in the ready sections so the list stays short
-    const gk=sg.k+"|"+i.dealer;gshut=sg.k.startsWith("post")&&n>4&&(GRP_OPEN[gk]===undefined?true:!GRP_OPEN[gk]);h+=`<tr class="dealer"><td colspan="6"><span class="dlink" onclick="openDealer(${esc(JSON.stringify(i.dealer))})" title="Dealer card: fonts, links, colours, pages">${esc(i.dealer)}</span>${ccBtn({dealer:i.dealer})}<span class="cnt">${n} page${n>1?"s":""}</span>${sg.k.startsWith("post")&&n>4?`<button class="grp-tg" onclick="toggleGrp(${esc(JSON.stringify(gk))},${gshut})">${gshut?"Show "+n+" pages ▸":"Fold ▾"}</button>`:""}</td></tr>`;last=i.dealer}
+    const gk=sg.k+"|"+i.dealer;gshut=sg.k.startsWith("post")&&n>4&&(GRP_OPEN[gk]===undefined?true:!GRP_OPEN[gk]);h+=`<tr class="dealer"><td colspan="6"><span class="dlink" onclick="openDealer(${esc(JSON.stringify(i.dealer))})" title="Dealer card: fonts, links, colours, pages">${esc(i.dealer)}</span>${ccBtn({dealer:i.dealer})}<span class="cnt">${n} page${n>1?"s":""}</span>${batchBtns(i.dealer)}${sg.k.startsWith("post")&&n>4?`<button class="grp-tg" onclick="toggleGrp(${esc(JSON.stringify(gk))},${gshut})">${gshut?"Show "+n+" pages ▸":"Fold ▾"}</button>`:""}</td></tr>`;last=i.dealer}
    if(gshut)continue;
    h+=sg.compact?rowCompact(i):rowFull(i);
   }
@@ -1202,6 +1334,13 @@ const HOWTO=[
 <li><b>Revisions first:</b> a page QA sent back shows red. Open it and press <i>Fix it now</i>, or press <b>Start</b> and Claude works the whole queue (revisions first, then new pages).</li>
 <li><b>Post what is ready:</b> the <i>Ready to post</i> stage - copy the fields, upload the images, <i>Mark as posted</i>, then set the page to Waiting for Review on monday yourself.</li>
 <li><b>End of shift:</b> the shift report is made for you (saved, copied to the clipboard and shown in a pop-up). It is also under <i>Activity</i>.</li></ol>`],
+["Dashboard and the menu",`<p>The tracker opens on the <b>Dashboard</b>: the whole picture on one screen.</p><ul>
+<li><b>Five numbers at the top</b> - Ready to post, Revisions open, With QA, Overdue (or Due in 7 days when nothing is late) and Approved this week. Click one to open that list.</li>
+<li><b>Last days chart</b> - per day: pages Claude built or fixed, QA revision comments, and pages approved. Point at a day for its numbers.</li>
+<li><b>Where the pages are</b> and <b>Dealers with open work</b> - click a bar to open the list or the dealer card.</li>
+<li><b>Due next</b> - the next pages by due date; click one to open it. <b>QA this week</b> and <b>Claude this week</b> sit beside it.</li>
+<li><b>Open the work list</b> takes you to <i>All</i>. Typing in the search box also jumps there.</li></ul>
+<p>On a wide screen the tabs sit in a menu on the left: <i>Work</i> (the page lists), <i>Views</i>, <i>Reports</i> and <i>Settings</i> at the bottom. On a smaller screen they are in one row at the top, as before.</p>`],
 ["The list: stages and colours",`<p>Pages are grouped by what has to happen next:</p><ul>
 <li><b>Ready to post</b> - Claude is done; you upload and post.</li>
 <li><b>Claude is working on it</b> - leave it; the Now box shows the step.</li>
@@ -1246,10 +1385,14 @@ const HOWTO=[
 <p><b>Search</b> (magnifier) finds a dealer, page or note.</p>`],
 ["Auto-update and pop-ups",`<ul>
 <li>During your shift the tracker checks monday every few minutes by itself. New pages assigned to you appear within minutes.</li>
+<li>An amber line "<i>N assigned tasks on monday the tracker couldn't place</i>" means monday gave you something the tracker doesn't treat as a page. Open it and check; <i>Got it</i> hides it.</li>
+<li>Several city pages under one monday item (e.g. 6 cities)? Press <b>Build N as a batch</b> on the dealer row: Claude builds the first one as a sample. Check it, then press <b>Copy sample to the other N</b> - Claude makes the rest from it with their own content docs. If one of them is already built, the dealer row offers <b>Copy &lt;that page&gt; to the other N</b> straight away.</li>
+<li>Tracker looks behind monday? Press <b>Refresh</b> (top right). It re-reads everything from monday right away, any time of day (about a minute; the arrow spins while it works).</li>
 <li>Windows/Mac pop-ups tell you about revisions, new pages, approvals, due dates and when a Claude run finishes. Turn each one on or off under <i>Auto-update and pop-ups</i>.</li>
 <li>The tracker only <b>reads</b> monday - it never posts or changes anything there.</li></ul>`],
 ["Settings on this page",`<ul>
 <li><b>monday connection</b> - your own monday API token (monday: profile picture &gt; Developers &gt; My access tokens).</li>
+<li><b>Figma connection</b> - your own Figma key (Figma: profile picture &gt; Settings &gt; Security &gt; Personal access tokens, read-only). With it the QA check compares each page's spacing with its Figma design, without Claude tokens. Figma keys expire: put the date Figma shows under <i>Key expires on</i>. From 7 days before, an amber line shows on the Dashboard and All tabs, with a pop-up at 7 days and 1 day left; a red line if Figma refuses the key. Then make a new key and paste it here.</li>
 <li><b>Your shift</b> - your hours; auto-update, pop-ups and the shift report follow them.</li>
 <li><b>My build memory</b> - link your own Claude memory so every build follows <i>your</i> rules. <i>Check what Claude will follow</i> shows a summary.</li>
 <li><b>Folders</b> - where your MLP / city page projects live, and the shared <i>Updates folder</i> for new versions.</li>
@@ -1278,6 +1421,18 @@ async function settingsView(){
   <div class="hint" id="musage" style="margin:10px 0 0">monday API use: loading…</div>
   <div class="row"><input type="password" id="newtok" placeholder="Paste a new monday token (profile picture > Developers > My access tokens)" style="flex:1;min-width:260px" autocomplete="off">
    <button class="sbtn" onclick="saveToken()">Save token</button></div>
+ </div>
+ <div class="sbox"><h2>Figma connection</h2>
+  <p class="hint">The QA check compares each page's spacing with its Figma design. It reads the Figma with your own Figma key: read-only, no Claude tokens. The key is saved only on this PC and only the last 4 characters are ever shown.</p>
+  <div class="row" style="margin-top:0"><span class="tok ${S.figma_hint?"":"bad"}" id="ftokstate">${S.figma_hint?"Key saved ("+esc(S.figma_hint)+")":"No Figma key - the spacing check vs Figma is off"}</span>
+   <button class="sbtn alt" onclick="testFigma()">Test connection</button></div>
+  <div class="row"><input type="password" id="newftok" placeholder="Paste your Figma key (Figma: profile picture > Settings > Security > Personal access tokens)" style="flex:1;min-width:260px" autocomplete="off">
+   <button class="sbtn" onclick="saveFigma()">Save key</button></div>
+  <div class="row"><label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700">Key expires on
+   <input type="date" id="ftokexp" value="${esc((S.figma_meta&&S.figma_meta.expires)||"")}"></label>
+   <button class="sbtn alt" onclick="saveFigmaDate()">Save date</button>
+   <span class="hint" style="margin:0">${(()=>{const m=S.figma_meta||{};if(!m.expires)return "Figma shows the expiry date when you make the key. The tracker warns you 7 days before.";
+    return (m.days<0?"Expired":m.days===0?"Expires today":"Expires in "+m.days+" day"+(m.days===1?"":"s"))+(m.estimated?" - a guess (90 days after saving); put the date Figma showed for an exact warning":" - you get a warning 7 days before");})()}</span></div>
  </div>
  <div class="sbox"><h2>Auto-update and pop-ups</h2>
   <p class="hint">Every few minutes the tracker asks monday "did anything change?" (one small read-only question, about 2 seconds, no Claude tokens). Only when something changed does it run the full refresh. Then it sends a Windows pop-up for what you pick below; click a pop-up to open the tracker.</p>
@@ -1377,6 +1532,17 @@ async function saveQA(){const j=await spost("/api/qa",{text:$("#qatext").value})
 async function saveToken(){const t=$("#newtok").value.trim();if(!t)return toast("Paste the token first");
  $("#tokstate").textContent="Checking with monday…";$("#tokstate").className="tok";const j=await spost("/api/token",{token:t});$("#newtok").value="";
  $("#tokstate").textContent=j.ok?"Saved - "+j.msg:j.error;$("#tokstate").className="tok "+(j.ok?"ok":"bad");poll()}
+async function saveFigma(){const t=$("#newftok").value.trim();if(!t)return toast("Paste the Figma key first");
+ $("#ftokstate").textContent="Checking with Figma…";$("#ftokstate").className="tok";const j=await spost("/api/figma-token",{token:t,expires:$("#ftokexp").value});$("#newftok").value="";
+ $("#ftokstate").textContent=j.ok?"Saved - "+j.msg:j.error;$("#ftokstate").className="tok "+(j.ok?"ok":"bad");if(j.ok)setTimeout(()=>{settingsView();load()},1500)}
+async function saveFigmaDate(){const j=await spost("/api/figma-expiry",{expires:$("#ftokexp").value});toast(j.ok?j.msg:j.error,4000);if(j.ok){settingsView();load()}}
+// amber/red line on the Dashboard and All tabs when the Figma key is close to expiring or refused (2026-11-20)
+function figmaNote(){const k=D&&D.figma_key;if(!k||!["soon","expired","refused"].includes(k.state)||!["dash","all"].includes(tab))return"";
+ const red=k.state!=="soon",t=k.state==="refused"?"Figma refused the key - the spacing check vs Figma is paused.":k.state==="expired"?"The Figma key has expired - the spacing check vs Figma is paused.":
+  (k.days<=0?"The Figma key expires today.":k.days===1?"The Figma key expires tomorrow.":`The Figma key expires in ${k.days} days (${fmtDate(k.expires)}).`);
+ return `<div class="unpl fkey${red?" red":""}">${t} Make a new key in Figma and paste it in <a href="#" onclick="event.preventDefault();go('settings')">Settings → Figma connection</a>.</div>`}
+async function testFigma(){$("#ftokstate").textContent="Checking with Figma…";$("#ftokstate").className="tok";const j=await spost("/api/figma-token/test",{});
+ $("#ftokstate").textContent=j.ok?j.msg:j.error;$("#ftokstate").className="tok "+(j.ok?"ok":"bad")}
 async function testToken(){$("#tokstate").textContent="Checking with monday…";$("#tokstate").className="tok";const j=await spost("/api/token/test",{});
  $("#tokstate").textContent=j.ok?j.msg:j.error;$("#tokstate").className="tok "+(j.ok?"ok":"bad")}
 async function edit(sid,field,value){const r=await fetch("/api/edit",{method:"POST",body:JSON.stringify({sid,field,value})});const j=await r.json();toast(j.ok?"Saved":j.error);load()}
@@ -1470,15 +1636,16 @@ async function blogsView(){
  const hit=(d,t)=>!ql||(d+" "+t).toLowerCase().includes(ql);
  // rule 2026-11-19 (user): a blog in For SEO Review can be published (your turn, like For Web Posting) but the chip
  // keeps saying For SEO Review ("it must still show SEO review but can be publish") + a small "can publish" tag
- const chip=(st,turn)=>{if(!st)return"";const seo=st==="For SEO Review";
-  return `<span class="mst bchip" style="--mc:${BSC[st]||"#98A2B3"}" title="${seo?"monday status: For SEO Review - you can already publish it (rule since Nov 19)":"monday status"}">${turn?"Your turn · ":""}${esc(st)}</span>${seo?'<span class="bcanpub" title="For SEO Review blogs can be published now (rule since Nov 19)">can publish</span>':""}`};
+ // rule 2026-11-20 (user): For SEO Review + a live link = done (not your turn, listed with Published)
+ const chip=(st,turn,done)=>{if(!st)return"";const seo=st==="For SEO Review";
+  return `<span class="mst bchip" style="--mc:${BSC[st]||"#98A2B3"}" title="${seo?(done?"monday status: For SEO Review - it already has a live link, so it counts as done":"monday status: For SEO Review - you can already publish it (rule since Nov 19)"):"monday status"}">${turn?"Your turn · ":""}${esc(st)}</span>${seo?(done?'<span class="bcanpub bdone" title="For SEO Review with a live link counts as done (rule since Nov 20)">done · live</span>':'<span class="bcanpub" title="For SEO Review blogs can be published now (rule since Nov 19)">can publish</span>'):""}`};
  const late=x=>x.turn&&x.date&&x.date<today;   // red "late" only when it is on you (2026-11-17)
  const when=x=>x.date?`<span class="${late(x)?"blate":""}" title="Publication date on monday">${late(x)?"late · ":""}${esc(fmtDate(x.date))}</span>`:"";
  const ext=(u,l,t)=>u?`<a class="blk" href="${esc(u)}" target="_blank" rel="noopener" title="${t}">${l}</a>`:"";
  const mon=u=>u?`<a class="mbtn" href="${esc(u)}" target="_blank" rel="noopener" title="Open this blog on monday">monday</a>`:"";
  // a blog you built (folder in the Blogs folder)
  const built=b=>`<div class="brow${b.turn?" bturn":""}"><div class="btl" title="Open the blog (preview.html)" onclick="blogOpen(${J(b.name)},'preview')">${esc(b.title)}</div>
-  <div class="bmeta">${chip(b.status,b.turn)}${b.pub?when({date:b.pub,status:b.status,turn:b.turn}):`<span>${esc(fmtDate(b.changed.slice(0,10)))}</span>`}
+  <div class="bmeta">${chip(b.status,b.turn,b.done)}${b.pub?when({date:b.pub,status:b.status,turn:b.turn}):`<span>${esc(fmtDate(b.changed.slice(0,10)))}</span>`}
   ${b.nomatch?`<span class="blate" title="No monday item has this title - check the folder name">not found on monday</span>`:""}
   ${ext(b.doc,"Doc","Open the Google Doc (source)")}${ext(b.live,"Live","Open the live blog")}${b.status==="Published"&&!b.live&&b.monday?`<span class="blate" title="Published on monday but the Live URL column is empty">no live URL</span>`:""}
   <a class="blk" href="#" onclick="event.preventDefault();blogOpen(${J(b.name)},'folder')" title="Open the blog folder (images)">Folder</a></div>
@@ -1488,7 +1655,7 @@ async function blogsView(){
   ${b.has_cms?`<button onclick="blogCopy(${J(b.name)},this)" title="Copy cms.html - paste it into the CMS">Copy HTML</button><button onclick="blogCheck(${J(b.name)},${J(b.title)},this)" title="Check cms.html: images load, alt text, links, bold, no H1, no placeholders">Check</button>`:""}</div></div>`;
  // a blog only on monday (no folder yet)
  const mrow=x=>`<div class="bline${x.turn?" bturn":""}"><a class="bln" href="${esc(x.url)}" target="_blank" rel="noopener" title="Open on monday${x.writer?" · writer: "+esc(x.writer):""}">${esc(x.name)}</a>
-  <div class="bmeta">${chip(x.status,x.turn)}${when(x)}${ext(x.doc,"Doc","Open the Google Doc (source)")}${ext(x.live,"Live","Open the live blog")}</div>
+  <div class="bmeta">${chip(x.status,x.turn,x.done)}${when(x)}${ext(x.doc,"Doc","Open the Google Doc (source)")}${ext(x.live,"Live","Open the live blog")}</div>
   ${x.turn?`<div class="bm"><a class="mbtn" href="${esc(x.url)}" target="_blank" rel="noopener">monday</a><button class="bbuild" onclick="blogBuild(${J(x.url)},${J(x.name)},this)" title="Claude builds it from the Google Doc: folder, images (WebP), preview.html, cms.html, then the blog check">Build it</button></div>`:""}</div>`;
  if(BFILT==="turn"&&!r.your_turn&&!ql)BFILT="all";const F=BFILT;
  const ds=r.dealers.map((d,k)=>({...d,no:k+1,b:d.blogs.filter(b=>hit(d.name,b.title)&&(F!=="turn"||b.turn)),u:d.upcoming.filter(x=>hit(d.name,x.name)&&(F!=="turn"||x.turn)),p:F==="all"?d.published.filter(x=>hit(d.name,x.name)):[]}))
@@ -1500,7 +1667,7 @@ async function blogsView(){
   ${d.b.length?`<div class="bsec">Built</div>${d.b.map(built).join("")}`:""}
   ${up.length?`<div class="bsec">Coming up</div>${up.slice(0,ql?99:MAX).map(mrow).join("")}${!ql&&up.length>MAX?`<details class="bmore"><summary>+${up.length-MAX} more in the next 2 weeks</summary>${up.slice(MAX).map(mrow).join("")}</details>`:""}`:""}
   ${later.length?`<details class="bmore"><summary>Later (${later.length}) - after ${esc(fmtDate(soon))}</summary>${later.map(mrow).join("")}</details>`:""}
-  ${d.p.length?`<details class="bmore"${ql?" open":""}><summary>Published (${d.p.length})</summary>${d.p.map(mrow).join("")}</details>`:""}
+  ${d.p.length?`<details class="bmore"${ql?" open":""}><summary>Published / done (${d.p.length})</summary>${d.p.map(mrow).join("")}</details>`:""}
   ${!d.total?`<div class="small">No blogs on monday yet</div>`:""}</div>`};
  const oth=r.other.filter(b=>hit(b.site,b.title));
  const nb=r.dealers.reduce((n,d)=>n+d.total,0);
@@ -1630,6 +1797,85 @@ function calendarView(){const items=(D.state||{}).items||[],today=new Date();tod
   h+=`<div class="day${cls}"><div class="dn">${d.toLocaleDateString("en-US",{month:"short",day:"numeric"})}<span>${list.length?list.length+" due":""}</span></div>${list.map(ev).join("")}${(bev[key]||[]).map(bv).join("")}</div>`}
  h+=`</div>${noDue.length?`<div class="small" style="margin-top:12px">No due date: ${noDue.map(i=>esc(i.dealer+" - "+i.mlp)).join(", ")}</div>`:""}</div>`;
  $("#view").innerHTML=h}
+// ---------------------------------------------------------------- Dashboard (2026-11-20, user: "lets put a dashboard for our automation tracker")
+// Everything here is read from data the tracker already has: /api/state (pages, history, approved, Claude usage),
+// /api/qa-report and /api/costs (fetched at most every 5 minutes). Every number links to the tab that holds the details.
+function searchIn(el){q=el.value;if(tab==="dash"&&q){tab="all";render();const n=$("#tabs input");if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length)}return}renderView()}
+let DX={qa:null,costs:null,at:0};
+function dashExtras(){if(Date.now()-DX.at<300000)return;DX.at=Date.now();
+ Promise.all([fetch("/api/qa-report").then(r=>r.json()).catch(()=>null),fetch("/api/costs").then(r=>r.json()).catch(()=>null)])
+  .then(([a,b])=>{DX.qa=a;DX.costs=b;if(tab==="dash")renderView()})}
+const dayKey=d=>ymd(d);
+function weekStart(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d}   // Monday
+function dashView(){
+ dashExtras();
+ const st=D.state||{},items=st.items||[],ap=st.approved||[],hist=D.history||[];
+ const now=new Date(),wk=ymd(weekStart());
+ const cnt=k=>items.filter(i=>stageOf(i)===k).length;
+ const ready=cnt("post")+cnt("postrev"),fixing=cnt("claude"),withQa=cnt("qa"),late=items.filter(overdueUs);
+ const due7=items.filter(i=>i.days_left!=null&&i.days_left>=0&&i.days_left<=7&&!WAITING.includes(i.status)).length;
+ const apDay0=ap.reduce((m,a)=>a.first_seen_approved&&a.first_seen_approved<m?a.first_seen_approved:m,"9999");   // first tracker day = old approvals imported
+ const apReal=a=>a.first_seen_approved&&a.first_seen_approved!==apDay0&&String(a.approved_before_tracking)!=="True";
+ const apWeek=ap.filter(a=>apReal(a)&&a.first_seen_approved>=wk).length;
+ const hr=now.getHours(),hi=hr<12&&hr>=5?"Good morning":hr<18&&hr>=12?"Good afternoon":"Good evening";
+ const first=(st.owner||"").split(/\s+/)[0];
+ // ---- KPI tiles
+ const tile=(n,l,sub,go_,tone)=>`<button class="dk${tone?" "+tone:""}" onclick="${go_}"><span class="dkn">${n}</span><span class="dkl">${l}</span><span class="dks">${sub}</span></button>`;
+ let h=`<div class="dash"><div class="dhead"><div><h2>${hi}${first?", "+esc(first):""}</h2><div class="small">${now.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})} · monday read ${esc(String(st.refreshed_at||"-").slice(11,16))}</div></div>
+  <button class="dgo" onclick="go('all')">Open the work list →</button></div>
+ <div class="dkpis">
+  ${tile(ready,"Ready to post",ready?"upload, paste, mark posted":"nothing waiting ✓","go('post')",ready?"good":"")}
+  ${tile(fixing,"Revisions open",fixing?"Claude fixes these first":"none right now ✓","go('all')",fixing?"warn":"")}
+  ${tile(withQa,"With QA","Waiting for Review","go('review')","")}
+  ${tile(late.length?late.length:due7,late.length?"Overdue":"Due in 7 days",late.length?"past the due date":"still on our side","go('calendar')",late.length?"bad":"")}
+  ${tile(apWeek,"Approved this week",ap.length+" approved in all","go('approved')","")}
+ </div>`;
+ // ---- 14-day chart: built/fixed by Claude, QA revision comments, approved
+ const dates=[];for(let k=13;k>=0;k--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-k);dates.push(dayKey(d))}
+ const oldest=hist.reduce((m,r)=>r[0]&&r[0]<m?r[0].slice(0,10):m,"9999");
+ const days=dates.filter(d=>d>=oldest);
+ const S=[{k:"built",l:"Built or fixed by Claude",c:"var(--s1)"},{k:"rev",l:"QA revision comments",c:"var(--s2)"},{k:"appr",l:"Approved",c:"var(--s3)"}];
+ const by={};days.forEach(d=>by[d]={built:0,rev:0,appr:0});
+ hist.forEach(r=>{const d=String(r[0]||"").slice(0,10);if(!by[d])return;const e=String(r[3]||"");
+  if(/^Claude finished (building|revision)/.test(e))by[d].built++;else if(/^Revision requested on monday/.test(e))by[d].rev++});
+ ap.forEach(a=>{if(apReal(a)&&by[a.first_seen_approved])by[a.first_seen_approved].appr++});
+ const tot=S.map(s=>days.reduce((n,d)=>n+by[d][s.k],0));
+ h+=`<div class="dgrid"><section class="dcard wide"><div class="dch"><h3>Last ${days.length} days</h3><div class="dleg">${S.map((s,x)=>`<span><i style="background:${s.c}"></i>${s.l} <b>${tot[x]}</b></span>`).join("")}</div></div>${dashChart(days,by,S)}</section>`;
+ // ---- where pages are (one hue, magnitude)
+ const sg=STAGES.map(s=>({...s,n:cnt(s.k)})).filter(s=>s.n),mx=Math.max(1,...sg.map(s=>s.n));
+ h+=`<section class="dcard"><div class="dch"><h3>Where the ${items.length} pages are</h3></div><div class="dbars">${sg.map(s=>`<button class="dbar" onclick="go('all')" title="${esc(s.h||s.t)}"><span class="dbl">${esc(s.t)}</span><span class="dbt"><i style="width:${Math.max(4,s.n/mx*100)}%"></i></span><b>${s.n}</b></button>`).join("")||'<div class="small">No pages on the tracker right now.</div>'}</div></section></div>`;
+ // ---- due next / busiest dealers / QA / Claude
+ const dueList=items.filter(i=>i.due&&!WAITING.includes(i.status)).sort((a,b)=>String(a.due).localeCompare(String(b.due))).slice(0,7);
+ const dueChip=i=>i.days_left==null?"":i.days_left<0?`<span class="due late">${-i.days_left}d late</span>`:i.days_left===0?`<span class="due soon">today</span>`:i.days_left<=2?`<span class="due soon">${i.days_left}d</span>`:`<span class="due">${i.days_left}d</span>`;
+ const stT=k=>(STAGES.find(s=>s.k===k)||{}).t||"";
+ h+=`<div class="dgrid three"><section class="dcard"><div class="dch"><h3>Due next</h3><button class="dlk" onclick="go('calendar')">Calendar →</button></div>${dueList.length?`<ul class="dlist">${dueList.map(i=>`<li onclick="openItem(${+i.subitem_id})"><span class="dd">${fmtDate(i.due)}</span><span class="dn2"><b>${esc(i.mlp)}</b><span>${esc(i.dealer)} · ${esc(stT(stageOf(i)))}</span></span>${dueChip(i)}</li>`).join("")}</ul>`:'<div class="dempty">Nothing due on our side ✓</div>'}</section>`;
+ const dl={};items.filter(i=>stageOf(i)!=="qa").forEach(i=>dl[i.dealer]=(dl[i.dealer]||0)+1);
+ const top=Object.entries(dl).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,6),tm=Math.max(1,...top.map(t=>t[1]));
+ h+=`<section class="dcard"><div class="dch"><h3>Dealers with open work</h3></div>${top.length?`<div class="dbars">${top.map(([d,n])=>`<button class="dbar" onclick="openDealer(${esc(JSON.stringify(d))})" title="Open the dealer card"><span class="dbl">${esc(d)}</span><span class="dbt"><i style="width:${Math.max(4,n/tm*100)}%"></i></span><b>${n}</b></button>`).join("")}</div>`:'<div class="dempty">Everything is with QA ✓</div>'}</section>`;
+ const qa=DX.qa,k=qa&&qa.kpi;
+ let side=`<section class="dcard"><div class="dch"><h3>QA this week</h3><button class="dlk" onclick="go('qareport')">QA report →</button></div>`;
+ if(k){const d=k.points-k.prev_points,arrow=d<0?"▼":d>0?"▲":"";
+  side+=`<div class="dstat"><span class="dkn">${k.points}</span><span class="small">QA points · <span class="${d<0?"dgood":d>0?"dbad":""}">${arrow} ${Math.abs(d)} vs last week</span></span></div>
+   <ul class="dtypes">${(qa.types||[]).filter(t=>t.this).slice(0,3).map(t=>`<li><span>${esc(t.type)}</span><b>${t.this}</b></li>`).join("")}</ul>`}
+ else side+=`<div class="small">${qa===null?"Loading…":"No QA data yet."}</div>`;
+ const cu=D.claude_usage||{},runs=((DX.costs||{}).runs||[]).filter(r=>String(r.started||"")>=wk),mins=Math.round(runs.reduce((n,r)=>n+(+r.minutes||0),0));
+ const wkUse=cu.seven_day&&cu.seven_day.used!=null?Math.round(cu.seven_day.used):null;
+ side+=`<div class="dsub"><h3>Claude this week</h3><div class="small">${runs.length} run${runs.length===1?"":"s"} · ${mins} min${wkUse!=null?` · weekly limit used ${wkUse}%`:""}</div>${wkUse!=null?`<div class="dbt big" title="Weekly Claude usage"><i style="width:${Math.min(100,wkUse)}%"></i></div>`:""}</div></section></div></div>`;
+ h+=side;$("#view").innerHTML=h}
+function dashChart(days,by,S){
+ const W=640,H=200,pl=26,pb=22,pt=8,n=days.length||1,bw=(W-pl)/n;
+ const tot=d=>S.reduce((x,s)=>x+by[d][s.k],0),mx=Math.max(4,...days.map(tot)),step=mx<=8?2:mx<=20?5:10,top=Math.ceil(mx/step)*step;
+ const y=v=>H-pb-(v/top)*(H-pb-pt);
+ let g="";for(let v=0;v<=top;v+=step)g+=`<line x1="${pl}" x2="${W}" y1="${y(v)}" y2="${y(v)}" class="dgl"/><text x="${pl-6}" y="${y(v)+3.5}" text-anchor="end" class="dax">${v}</text>`;
+ days.forEach((d,x)=>{const cx=pl+x*bw,w=Math.min(26,bw*.62),x0=cx+(bw-w)/2;let acc=0;const segs=S.filter(s=>by[d][s.k]);
+  const tip=`${fmtDate(d)}\n`+S.map(s=>`${s.l}: ${by[d][s.k]}`).join("\n");
+  g+=`<g class="dcol"><title>${esc(tip)}</title><rect x="${cx}" y="${pt}" width="${bw}" height="${H-pb-pt}" fill="transparent"/>`;
+  segs.forEach((s,j)=>{const v=by[d][s.k],y1=y(acc+v),y0=y(acc),last=j===segs.length-1,hgt=Math.max(1,y0-y1-(j?2:0));
+   g+=last?`<path d="M${x0},${y0-(j?2:0)}V${y1+4}q0,-4 4,-4h${w-8}q4,0 4,4V${y0-(j?2:0)}Z" fill="${s.c}"/>`:`<rect x="${x0}" y="${y1}" width="${w}" height="${hgt}" fill="${s.c}"/>`;acc+=v});
+  if(n<=14||x%2===0)g+=`<text x="${cx+bw/2}" y="${H-6}" text-anchor="middle" class="dax">${d===ymd(new Date())?"Today":new Date(d+"T00:00").toLocaleDateString("en-US",{month:"numeric",day:"numeric"})}</text>`;
+  g+=`</g>`});
+ return `<svg class="dchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Pages built, QA revisions and approvals per day">${g}</svg>`}
+
 applyTheme();
 if(TABS.some(t=>t[0]===location.hash.slice(1)))tab=location.hash.slice(1);   // e.g. /#settings opens that tab
 load().then(()=>{const h=decodeURIComponent(location.hash.slice(1));   // /#item=<id> or /#dealer=<name> opens that panel

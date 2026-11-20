@@ -193,7 +193,8 @@ def watcher(job_running):
             cfg = settings.load()
             daily_jobs(cfg)                              # backup once a day + end-of-shift report (any hour)
             w = read_json(WATCH, {})
-            force = bool(w.pop("force", False))          # "Check monday now" works any time, even outside the shift
+            force = w.pop("force", False)                # "Check monday now" works any time, even outside the shift
+            full = force == "full"                       # header Refresh: full re-read even if the quick check sees no change
             if not settings.token() or (not force and (not cfg.get("watch_enabled") or not in_window(cfg))):
                 continue
             last = w.get("last_check")
@@ -216,16 +217,17 @@ def watcher(job_running):
                 last_full = w.get("last_full")
                 stale = not last_full or datetime.now() - datetime.strptime(last_full, "%Y-%m-%d %H:%M:%S") >= timedelta(minutes=FULL_EVERY)
                 changed = sig != w.get("sig")          # compared BEFORE saving (the label always said "30-minute" before)
-                if changed or stale:
+                if changed or stale or full:
                     first = w.get("sig") is None
                     w["sig"] = sig
                     write_json(WATCH, w)
-                    why = ("first check" if first else "new page assigned on monday" if changed and res.get("new")
+                    why = ("first check" if first else "you pressed Refresh" if full
+                           else "new page assigned on monday" if changed and res.get("new")
                            else "monday changed" if changed else f"{FULL_EVERY}-minute full check (new assignments)")
                     ok, line = run_refresh(why)
                     w = read_json(WATCH, w)
                     w["last_full"] = now_s()
-                    if why != f"{FULL_EVERY}-minute full check (new assignments)":
+                    if why not in (f"{FULL_EVERY}-minute full check (new assignments)", "you pressed Refresh"):
                         w["last_change"] = now_s()
                     w["last_result"] = line if ok else "refresh failed - see the auto-refresh log"
             alerts = due_alerts(cfg, w)
@@ -909,8 +911,74 @@ def sync_team_rules_if_changed():
         pass
 
 
+# ---- Figma key expiry (user, 2026-11-20: "if the token is nearly expired give notification to the tracker")
+def figma_key_status():
+    """{state: none|ok|soon|expired|refused, days, expires, estimated} - 'soon' = 7 days or less left."""
+    if not settings.figma_token():
+        return {"state": "none"}
+    m = settings.figma_meta()
+    if not m.get("expires"):
+        m = settings.save_figma_meta("")                 # key saved before the expiry date existed: assume 90 days
+    out = {"expires": m["expires"], "estimated": bool(m.get("estimated"))}
+    try:
+        days = (date.fromisoformat(m["expires"]) - date.today()).days
+    except ValueError:
+        days = None
+    out["days"] = days
+    if settings.FIGMA_REFUSED.exists():
+        out["state"] = "refused"
+    elif days is not None and days < 0:
+        out["state"] = "expired"
+    elif days is not None and days <= 7:
+        out["state"] = "soon"
+    else:
+        out["state"] = "ok"
+    return out
+
+
+def figma_key_alerts():
+    """Once a day ask Figma if the key still works (one small read, no Claude tokens), then one pop-up per step:
+    7 days left, 1 day left, expired, refused. A new key (new expiry date) starts the steps again."""
+    if not settings.figma_token():
+        return
+    w = read_json(WATCH, {})
+    today = date.today().isoformat()
+    if w.get("figma_checked") != today:
+        try:
+            subprocess.run([PY, "-I", str(Path(settings.get("toolkit_root")) / "tools" / "figma_layout.py"), "--check"],
+                           capture_output=True, text=True, timeout=60, creationflags=NOWIN)
+        except Exception:
+            pass
+        w = read_json(WATCH, {})
+        w["figma_checked"] = today
+        write_json(WATCH, w)
+    s = figma_key_status()
+    step = {"refused": "refused", "expired": "expired"}.get(s["state"])
+    if s["state"] == "soon":
+        step = "1day" if s.get("days", 9) <= 1 else "7days"
+    if not step:
+        return
+    sent = w.get("figma_alerts") or {}
+    k = f"{s.get('expires')}|{step}"
+    if sent.get(k):
+        return
+    msg = {"refused": "Figma refused the key, so the spacing check vs Figma is paused. Make a new key in Figma and paste it in Settings.",
+           "expired": "The Figma key has expired, so the spacing check vs Figma is paused. Make a new key in Figma and paste it in Settings.",
+           "1day": "The Figma key expires tomorrow. Make a new key in Figma and paste it in Settings > Figma connection.",
+           "7days": f"The Figma key expires in {s.get('days')} days ({s.get('expires')}). Make a new one in Figma and paste it in Settings > Figma connection."}[step]
+    toast("Figma key", msg, "settings")
+    sent[k] = now_s()
+    w = read_json(WATCH, {})
+    w["figma_alerts"] = sent
+    write_json(WATCH, w)
+
+
 def daily_jobs(cfg):
     sync_team_rules_if_changed()
+    try:
+        figma_key_alerts()
+    except Exception:
+        pass
     try:
         if not (BACKUPS / date.today().isoformat()).exists():
             backup()
@@ -1262,6 +1330,35 @@ def auto_qa_loop(state_file, claude_running):
             AUTOQA.update(sid=None, page="")
 
 
+# Figma link per page (2026-11-20, Figma spacing check): city pages and newer pages have their Figma link only in the
+# monday update. Copy it into <folder>/figma/link.txt so tools/figma_layout.py (run by qa_sweep.js) can read the design.
+FIGMA_RE = re.compile(r"https?://(?:www[.])?figma[.]com/(?:design|file)/[A-Za-z0-9]+[^\s\"'<>)]*")
+
+
+def save_figma_links():
+    upd = read_json(HERE / "updates_raw.json", {})
+    n = 0
+    for i in read_json(STATE, {}).get("items", []):
+        f = i.get("folder")
+        if not f or not (Path(f) / "preview.html").exists():
+            continue
+        src = upd.get(str(i.get("subitem_id"))) or upd.get(str(i.get("item_id")))
+        links = FIGMA_RE.findall(json.dumps(src or {}, ensure_ascii=False).replace(chr(92) + "n", " "))
+        if not links:
+            continue
+        best = next((l for l in links if "node-id=" in l), links[0]).rstrip("\\.,;")
+        lt = Path(f) / "figma" / "link.txt"
+        try:
+            if lt.exists() and lt.read_text(encoding="utf-8").strip() == best:
+                continue
+            lt.parent.mkdir(parents=True, exist_ok=True)
+            lt.write_text(best + chr(10), encoding="utf-8")
+            n += 1
+        except OSError:
+            pass
+    return n
+
+
 def precheck(folder, use_cache=False, wait=False):
     """Run the QA sweep (qa_sweep.js) on the project before you mark it posted. One at a time (one Edge).
     use_cache: reuse the saved result when preview.html has not changed since (bulk 'mark as posted')."""
@@ -1276,6 +1373,10 @@ def precheck(folder, use_cache=False, wait=False):
         return {"ok": True, "skipped": "QA sweep script not found"}
     if not PRECHECK.acquire(blocking=wait, timeout=600 if wait else -1):
         return {"error": "a QA check is already running - wait a moment"}
+    try:
+        save_figma_links()
+    except Exception:
+        pass
     try:
         r = subprocess.run(["node", str(script), str(folder)], capture_output=True, text=True, encoding="utf-8",
                            errors="replace", timeout=300, creationflags=NOWIN)

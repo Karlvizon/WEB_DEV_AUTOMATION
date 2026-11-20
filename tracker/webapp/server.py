@@ -27,6 +27,7 @@ sys.path.insert(0, str(APP))
 import features  # noqa: E402
 import blogs  # noqa: E402   (Blogs tab, 2026-11-17)
 import buildmemory  # noqa: E402   (Settings > My build memory, 2026-11-19)
+import batch  # noqa: E402   (batch city pages: sample first, then copy, 2026-11-20)
 
 
 def roots():
@@ -197,7 +198,7 @@ def settings_view():
         if i.get("platform") or i["dealer"] not in dealers:
             dealers[i["dealer"]] = dealers.get(i["dealer"]) or i.get("platform") or ""
     qf = qa_file()
-    return {"config": {k: c.get(k) for k in settings.TYPES}, "token_hint": settings.token_hint(),
+    return {"config": {k: c.get(k) for k in settings.TYPES}, "token_hint": settings.token_hint(), "figma_hint": settings.figma_hint(), "figma_meta": features.figma_key_status(),
             "token_file": str(settings.TOKEN_FILE), "platforms": settings.PLATFORMS,
             "dealers": [{"dealer": d, "platform": p} for d, p in sorted(dealers.items(), key=lambda x: x[0].lower())],
             "qa_path": str(qf), "qa_text": qf.read_text(encoding="utf-8") if qf.exists() else "",
@@ -226,6 +227,52 @@ def save_token(t):
         return {"error": "monday refused that token - nothing changed. " + msg}
     log_history("monday token updated on the Settings tab")
     return {"ok": True, "msg": msg}
+
+
+# ---------------------------------------------------------------- Figma key (2026-11-20, user: "lets proceed with figma key")
+def figma_tool():
+    return Path(settings.get("toolkit_root")) / "tools" / "figma_layout.py"
+
+
+def check_figma():
+    try:
+        r = subprocess.run([sys.executable, "-I", str(figma_tool()), "--check"], capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", timeout=60, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    except Exception as e:
+        return False, str(e)
+    out = ((r.stdout or "") + (r.stderr or "")).strip().splitlines()
+    return r.returncode == 0, (out[-1] if out else "no answer")
+
+
+def save_figma_token(t, expires=""):
+    old = settings.figma_token() if settings.FIGMA_TOKEN_FILE.exists() else ""
+    err = settings.save_figma_token(t)
+    if err:
+        return {"error": err}
+    ok, msg = check_figma()
+    if not ok:                                  # keep the old key when the new one is refused
+        if old:
+            settings.FIGMA_TOKEN_FILE.write_text(old + chr(10), encoding="utf-8")
+            check_figma()                       # re-check the old key so the red "refused" line is only shown when it is true
+        else:
+            settings.FIGMA_TOKEN_FILE.unlink(missing_ok=True)
+            settings.FIGMA_REFUSED.unlink(missing_ok=True)
+        return {"error": "Figma refused that key - nothing changed. " + msg}
+    settings.save_figma_meta(expires_ok(expires), saved=time.strftime("%Y-%m-%d"))   # new key = new expiry date
+    log_history("Figma key saved on the Settings tab")
+    return {"ok": True, "msg": msg}
+
+
+def expires_ok(s):
+    s = (s or "").strip()
+    return s if re.fullmatch(r"20[0-9]{2}-[01][0-9]-[0-3][0-9]", s) else ""
+
+
+def save_figma_expiry(s):
+    if not settings.figma_token():
+        return {"error": "Save the Figma key first."}
+    m = settings.save_figma_meta(expires_ok(s))
+    return {"ok": True, "msg": "Expiry date saved: " + m["expires"] + (" (a guess - 90 days after saving)" if m.get("estimated") else "")}
 
 
 def save_settings(changes):
@@ -410,20 +457,24 @@ def run_action(action, sid=None):
         subprocess.run([sys.executable, "-I", str(HERE / "build_mlp_tracker.py"), "--automation", "Stopped"], capture_output=True, cwd=str(HERE))
         log_history("Stop pressed in the web app (any running Claude job was halted)")
         return {"ok": True, "msg": "Stopped"}
-    if action not in PROMPTS and action not in ("fix", "build", "blog"):
+    if action not in PROMPTS and action not in ("fix", "build", "blog", "batch", "batch-copy"):
         return {"error": "unknown action"}
     if job_state()["running"]:
         if action == "blog":
             return {"error": f"a '{JOB['action']}' job is running - build the blog when it is done (or press Stop)"}
         if action == "fix" and JOB.get("action") == "start":
             return {"error": "Start is already running - it works revisions first, so this one is in its queue"}
-        if action == "build":
+        if action in ("build", "batch", "batch-copy"):
             return {"error": f"Claude is already working ({'the Start queue' if JOB['action'] == 'start' else JOB.get('page') or JOB['action']}) "
                              "- press Start now again when it is done, or press Stop first"}
         return {"error": f"a '{JOB['action']}' job is already running - wait for it or press Stop"}
-    if action in ("start", "fix", "build"):
+    if action in ("start", "fix", "build", "batch", "batch-copy"):
         try:
             features.write_dealer_lessons()          # fresh per-dealer QA lessons for this run (2026-11-14)
+            try:
+                features.save_figma_links()          # Figma link per page for the spacing check (2026-11-20)
+            except Exception:
+                pass
         except Exception:
             pass
     if action == "fix":
@@ -434,6 +485,18 @@ def run_action(action, sid=None):
         name, prompt = build_prompt(sid)
         if not prompt:
             return {"error": "page not found in the tracker"}
+    if action == "batch":   # batch step 1 (2026-11-20): sid = monday parent item id; build the first page as the sample
+        todo = [i for i in batch.group(sid) if batch.pending(i)]
+        if len(todo) < 2:
+            return {"error": "a batch needs at least 2 city pages that are not started yet"}
+        name, base = build_prompt(todo[0]["subitem_id"])
+        first, prompt = batch.sample_prompt(sid, base)
+        name += " (batch sample)"
+    if action == "batch-copy":   # batch step 2: the other pages from the sample
+        name, prompt, n_copy = batch.copy_prompt(sid, fmc_cmd())
+        if not prompt:
+            return {"error": "nothing to copy - the other pages are already started or done"}
+        batch.mark_copy(sid)
     if action == "blog":   # Blogs tab "Build it" (2026-11-17): sid = the blog's monday item URL
         name, prompt = blogs.build_prompt(sid)
         if not prompt:
@@ -444,9 +507,11 @@ def run_action(action, sid=None):
         subprocess.run([sys.executable, "-I", str(HERE / "build_mlp_tracker.py"), "--automation", "Running"], capture_output=True, cwd=str(HERE))
     if action == "fix":
         tools, turns = PROMPTS["start"][1], 250
-    elif action == "build":   # + Google Drive download for the content doc (city pages / MLP content)
+    elif action in ("build", "batch", "batch-copy"):   # + Google Drive download for the content doc (city pages / MLP content)
         tools, turns = PROMPTS["start"][1] + ["mcp__claude_ai_Google_Drive__download_file_content",
                                               "mcp__claude_ai_Google_Drive__get_file_metadata"], 300
+        if action == "batch-copy":
+            turns = min(900, 80 + 110 * n_copy)
     elif action == "blog":
         tools, turns = PROMPTS["start"][1] + ["mcp__claude_ai_Google_Drive__download_file_content",
                                               "mcp__claude_ai_Google_Drive__get_file_metadata"], 150
@@ -464,7 +529,8 @@ def run_action(action, sid=None):
     with JLOCK:
         JOB.update({"action": action, "started": started, "log": str(log), "ended": None, "code": None, "claude": not direct,
                     "activity": None, "tokens": None, "result": None, "result_text": None, "stopped_by_user": False,
-                    "page": name if action in ("fix", "build", "blog") else None, "sid": sid if action in ("fix", "build") else None})
+                    "page": name if action in ("fix", "build", "blog", "batch", "batch-copy") else None,
+                    "sid": sid if action in ("fix", "build") else first["subitem_id"] if action == "batch" else None})
     if direct:
         f = open(log, "a", encoding="utf-8")
         p = subprocess.Popen(cmd, cwd=str(HERE), stdout=f, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
@@ -483,6 +549,9 @@ def run_action(action, sid=None):
             JOB["page"] = name
         log_history(f"Fix it now: Claude started on the revision for {name}")
         return {"ok": True, "msg": f"Claude is fixing {name} - follow it in the header"}
+    if action in ("batch", "batch-copy"):
+        log_history(f"Batch: Claude started {name}")
+        return {"ok": True, "msg": f"Claude is working: {name} - follow it in the header"}
     if action == "build":
         with JLOCK:
             JOB["page"] = name
@@ -603,7 +672,9 @@ class H(BaseHTTPRequestHandler):
                                    "shift": {k: settings.get(k) for k in ("shift_start", "shift_hours")},
                                    "qa": features.qa_summary(read_json(STATE, {}).get("items") or []),
                                    "packs": features.pack_summary(read_json(STATE, {}).get("items") or []),
-                                   "update": features.update_info(), "claude_usage": features.claude_usage()})
+                                   "update": features.update_info(), "claude_usage": features.claude_usage(),
+                                   "batches": batch.state(), "unplaced": read_json(APP / "unplaced.json", {}),
+                                   "figma_key": features.figma_key_status()})
         if u.path == "/api/item":
             return self.send(200, item_detail(q.get("sid", [""])[0]))
         if u.path == "/file":
@@ -642,6 +713,13 @@ class H(BaseHTTPRequestHandler):
             return self.send(200, save_settings(body.get("changes")))
         if u.path == "/api/token":
             return self.send(200, save_token(body.get("token")))
+        if u.path == "/api/figma-token":
+            return self.send(200, save_figma_token(body.get("token"), body.get("expires")))
+        if u.path == "/api/figma-expiry":
+            return self.send(200, save_figma_expiry(body.get("expires")))
+        if u.path == "/api/figma-token/test":
+            ok, msg = check_figma()
+            return self.send(200, {"ok": True, "msg": msg} if ok else {"error": msg})
         if u.path == "/api/token/test":
             ok, msg = check_token()
             return self.send(200, {"ok": True, "msg": msg} if ok else {"error": msg})
@@ -699,9 +777,13 @@ class H(BaseHTTPRequestHandler):
             return self.send(200, {"ok": True, "msg": "Test pop-up sent - look at the bottom-right of your screen"})
         if u.path == "/api/check-now":
             w = features.read_json(features.WATCH, {})
-            w["force"] = True
+            full = bool(body.get("full"))   # header Refresh (user 2026-11-20): always re-read everything from monday
+            w["force"] = "full" if full else True
             features.write_json(features.WATCH, w)
-            return self.send(200, {"ok": True, "msg": "Checking monday now - the tracker updates if anything changed"})
+            if JOB.get("action") == "refresh" and job_state()["running"]:
+                return self.send(200, {"ok": True, "msg": "A monday refresh is already running"})
+            return self.send(200, {"ok": True, "msg": "Refreshing everything from monday - takes about a minute" if full
+                                   else "Checking monday now - the tracker updates if anything changed"})
         if u.path == "/api/edit":
             return self.send(200, edit_state(body.get("sid"), body.get("field"), body.get("value")))
         if u.path == "/api/blog-check":   # Blogs tab: check cms.html before posting

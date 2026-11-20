@@ -197,7 +197,9 @@ def owner_subitems(boards, owner_id):
 def to_record(it):
     p = it.get("parent_item") or {}
     pname = (p.get("name") or "").strip()
-    city = "city page" in pname.lower()
+    # a city page = parent named "City Pages" OR a subitem named after a place ("Orlando, FL", "Kansas City, MO/KS").
+    # 2026-11-20: One Legacy Motors' city pages sit under "Month 3-4 - We Buy Page [NOV-DEC]" and were skipped.
+    city = "city page" in pname.lower() or bool(re.search(r",\s*[A-Z]{2}\b", it.get("name") or ""))
     if not city and "final mlp" not in (it.get("name") or "").lower():
         return None
     cv = {c["id"]: c.get("text") or "" for c in it.get("column_values") or []}
@@ -207,6 +209,33 @@ def to_record(it):
            "assigned": cv.get("date0") or None, "due": cv.get("date_mkyp4bky") or None,
            "live_url": link_url(cv.get("link_mkypndq6")), "type": "City Page" if city else "MLP"}
     return rec
+
+
+SIDE_TASKS = ("final mlp", "final mobile check", "metatags & metadata", "seo review", "site live")
+
+
+def save_unplaced(raw):
+    """Never drop an assignment silently (user, 2026-11-20 #1 - One Legacy Motors' 6 city pages were missing because
+    their parent was not named "City Pages"). Every subitem assigned to the owner that is NOT a tracker page and NOT one
+    of the known side tasks, and not Approved yet, goes to webapp/unplaced.json -> one amber line in the tracker."""
+    out = []
+    for it in raw:
+        name = (it.get("name") or "").strip()
+        cv = {c["id"]: c.get("text") or "" for c in it.get("column_values") or []}
+        status = (cv.get("status") or "").strip()
+        if to_record(it) or name.lower() in SIDE_TASKS or status == "Approved":
+            continue
+        p = it.get("parent_item") or {}
+        out.append({"subitem_id": int(it["id"]), "name": name, "status": status or "-", "parent": (p.get("name") or "").strip(),
+                    "item_id": int(p.get("id") or 0), "dealer": ((p.get("board") or {}).get("name") or "").strip(),
+                    "board_id": int((p.get("board") or {}).get("id") or 0)})
+    out = list({u["subitem_id"]: u for u in out}.values())
+    f = HERE / "webapp" / "unplaced.json"
+    json.dump({"checked_at": datetime.now().strftime("%Y-%m-%d %H:%M"), "items": out},
+              open(f.with_suffix(".tmp"), "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+    os.replace(f.with_suffix(".tmp"), f)
+    if out:
+        print(f"  {len(out)} assigned task(s) the tracker could not place: " + "; ".join(f"{u['dealer']} - {u['name']}" for u in out))
 
 
 def save_assigned(raw):
@@ -311,6 +340,7 @@ def main():
             fmc[int(it["parent_item"]["id"])] = {"status": cv.get("status") or "", "id": int(it["id"])}
     print(f"  {len(boards)} dealer boards read, {len(recs)} Final MLP / city page subitems of {owner}")
     save_assigned(raw)
+    save_unplaced(raw)
 
     old_items = {int(i["subitem_id"]): i for i in old.get("items", [])}
     old_appr = {int(a["subitem_id"]): a for a in old.get("approved", [])}
