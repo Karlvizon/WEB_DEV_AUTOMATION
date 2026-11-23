@@ -87,6 +87,8 @@ def snapshot():
 
 def alerts_for(before, after, cfg):
     (b_items, b_appr), (a_items, a_appr) = before, after
+    if not b_items and not b_appr:   # first refresh on a new install: everything is "new" - no pop-up per page (2026-11-23)
+        return []
     out = []
     for sid, i in a_items.items():
         name = f"{i['dealer']} - {i['mlp']}"
