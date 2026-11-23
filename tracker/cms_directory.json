@@ -1,6 +1,7 @@
 {
  "source": "monday board 'Dealer Login and Setup' (18392876953), column CMS (link_mkzsam3e)",
- "checked_at": "2026-11-20",
+ "checked_at": "2026-11-23",
+ "board": 18392876953,
  "cms": {
   "Acura of Ocean": "Dealer Inspire",
   "Audi Annapolis": "DDC",
@@ -73,5 +74,295 @@
   "Huston CDJR": "Dealer Inspire",
   "Wray Ford": "Apollo",
   "Mercedes-Benz of Columbus": "Dealer Inspire"
+ },
+ "links": {
+  "Acura of Ocean": {
+   "cms": "https://www.acuraofocean.com/wp/wp-admin/",
+   "item": "10828734646"
+  },
+  "Audi Annapolis": {
+   "cms": "https://dealer.signin.coxautoinc.com/",
+   "item": "10828734503"
+  },
+  "Audi Stuart": {
+   "cms": "https://signin.coxautoinc.com/",
+   "item": "13071915028"
+  },
+  "Baldwin Subaru": {
+   "cms": "https://mycoxautomotive.coxautoinc.com/",
+   "item": "12989172257"
+  },
+  "Bayside Volkswagen": {
+   "cms": "https://getapollo.com/",
+   "item": "13080396461"
+  },
+  "BMW Fort Walton Beach": {
+   "cms": "https://www.bmwfwb.com/wp/wp-admin/",
+   "item": "10828738714"
+  },
+  "BMW of South Atlanta": {
+   "cms": "https://www.bmwofsouthatlanta.com/wp/wp-admin/",
+   "item": "11701934437"
+  },
+  "Brewster Subaru": {
+   "cms": "https://dealer.signin.coxautoinc.com/?solutionID=DDC_prod&clientId=fa9a52ac-a979-4501-bcdd-e5deb59df779",
+   "item": "10828738690"
+  },
+  "Bridgeton Auto Mall": {
+   "cms": "https://www.bridgetonautomall.com/wp/wp-admin/",
+   "item": "13298243779"
+  },
+  "Bridgeton Cadillac": {
+   "cms": "https://www.bridgetoncadillac.com/wp/wp-admin/",
+   "item": "13298257840"
+  },
+  "Bridgeton CDJR": {
+   "cms": "https://www.bridgetoncdjr.com/wp/wp-admin/",
+   "item": "13298256780"
+  },
+  "Bridgeton Chevrolet": {
+   "cms": "https://www.bridgetonchevrolet.com/wp/wp-admin/",
+   "item": "13298256781"
+  },
+  "Briggs Dodge Ram Fiat": {
+   "cms": "https://cms.dealeron.com/",
+   "item": "12802431758"
+  },
+  "Briggs Kia of Topeka": {
+   "cms": "https://cms.dealeron.com/",
+   "item": "12802443719"
+  },
+  "Briggs Subaru of Topeka": {
+   "cms": "https://cms.dealeron.com/",
+   "item": "12802467852"
+  },
+  "Chatham Parkway Lexus": {
+   "cms": "https://auth.ridemotive.com/u/login/identifier?state=hKFo2SB5aWd3WEVFRWpKdjQzY1dFSlpvRGduLUNPZVVCU2xfaqFur3VuaXZlcnNhbC1sb2dpbqN0aWTZIENmLXd2Yk1fMWl4cjZmYkQ5SjBBakYxLXJUT3JXU0VEo2NpZNkgVWJydkw0NFZqWm81dzFIQk5qRzM0MFZFM1E1SXBZTFo",
+   "item": "12549176530"
+  },
+  "Dalton Hyundai National City": {
+   "cms": "https://account.dealeron.com/Login/CustomLogin?returnUrl=%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dcmsfrontend%26redirect_uri%3Dhttps%253A%252F%252Fcms.dealeron.com%252Fdash%252Fdist%252Fcms%252Fcallback.html%26response_type%3Did_token%2520token%26scope%3Dopenid%2520dealeron.cms%2520dealeron.powertrain%2520dealeron.shell%2520dealeron.dql%26state%3D68244164a3f749b6ba805af1cfc83fcd%26nonce%3Dd5810d8975e847a293623b7f9e4ee5ed",
+   "item": "10828734574"
+  },
+  "Dalton Subaru National City": {
+   "cms": "https://account.dealeron.com/Login/CustomLogin?returnUrl=%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dcmsfrontend%26redirect_uri%3Dhttps%253A%252F%252Fcms.dealeron.com%252Fdash%252Fdist%252Fcms%252Fcallback.html%26response_type%3Did_token%2520token%26scope%3Dopenid%2520dealeron.cms%2520dealeron.powertrain%2520dealeron.shell%2520dealeron.dql%26state%3D68244164a3f749b6ba805af1cfc83fcd%26nonce%3Dd5810d8975e847a293623b7f9e4ee5ed",
+   "item": "10828751711"
+  },
+  "Dalton Toyota National City": {
+   "cms": "https://account.dealeron.com/Login/CustomLogin?returnUrl=%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dcmsfrontend%26redirect_uri%3Dhttps%253A%252F%252Fcms.dealeron.com%252Fdash%252Fdist%252Fcms%252Fcallback.html%26response_type%3Did_token%2520token%26scope%3Dopenid%2520dealeron.cms%2520dealeron.powertrain%2520dealeron.shell%2520dealeron.dql%26state%3D68244164a3f749b6ba805af1cfc83fcd%26nonce%3Dd5810d8975e847a293623b7f9e4ee5ed",
+   "item": "10828738740"
+  },
+  "Drive Philly": {
+   "cms": "https://www.drivephilly.com/wp/wp-admin/",
+   "item": "13298220235"
+  },
+  "Findlay Subaru of Las Vegas": {
+   "cms": "https://www.subaruoflasvegas.com/wp/wp-admin/",
+   "item": "10828734689"
+  },
+  "Findlay Subaru of Prescott": {
+   "cms": "https://getapollo.com/",
+   "item": "10828738769"
+  },
+  "GMC of Bridgeton": {
+   "cms": "https://www.bridgetongmc.com/wp/wp-admin/",
+   "item": "13298219963"
+  },
+  "Hanania Acura Of Orange Park": {
+   "cms": "https://www.hananiaacuraoforangepark.com/wp/wp-admin/",
+   "item": "10828738755"
+  },
+  "Helms Brothers Mercedes Benz": {
+   "cms": "https://www.helmsbros.com/wp/wp-admin",
+   "item": "13024657564"
+  },
+  "Hilton Head Lexus": {
+   "cms": "https://auth.ridemotive.com/u/login/identifier?state=hKFo2SB5aWd3WEVFRWpKdjQzY1dFSlpvRGduLUNPZVVCU2xfaqFur3VuaXZlcnNhbC1sb2dpbqN0aWTZIENmLXd2Yk1fMWl4cjZmYkQ5SjBBakYxLXJUT3JXU0VEo2NpZNkgVWJydkw0NFZqWm81dzFIQk5qRzM0MFZFM1E1SXBZTFo",
+   "item": "12608618863"
+  },
+  "I-90 Nissan": {
+   "cms": "https://www.bignissani90.com/wp/wp-admin/",
+   "item": "10828734545"
+  },
+  "Koeppel Auto Group": {
+   "cms": "https://dealer.signin.coxautoinc.com/?solutionID=DDC_prod&clientId=3d6741afc7c24cc3afa770223a04fae4",
+   "item": "10828734650"
+  },
+  "Koeppel Hyundai": {
+   "cms": "https://dealer.signin.coxautoinc.com/?solutionID=DDC_prod&clientId=3d6741afc7c24cc3afa770223a04fae4",
+   "item": "10828751829"
+  },
+  "Koeppel Mazda": {
+   "cms": "https://dealer.signin.coxautoinc.com/?solutionID=DDC_prod&clientId=3d6741afc7c24cc3afa770223a04fae4",
+   "item": "10828734546"
+  },
+  "Koeppel Subaru": {
+   "cms": "https://apps.dealercenter.coxautoinc.com/welcome/as/koeppelsubarusoa/a3brandskoeppelauto?lang=en_US",
+   "item": "10828734547"
+  },
+  "Koons Ford of Silver Spring": {
+   "cms": "https://cms.dealeron.com/dash/dist/cms/#/21763/Dashboard",
+   "item": "10828734616"
+  },
+  "Lithia Hyundai of Reno": {
+   "cms": "https://www.lithiahyundaireno.com/wp/wp-admin/",
+   "item": "10828734721"
+  },
+  "Mazda of Fort Walton Beach": {
+   "cms": "https://www.mazdafwb.com/wp/wp-admin",
+   "item": "10828751824"
+  },
+  "Mercedes-Benz of Fort Walton Beach": {
+   "cms": "https://www.mercedesbenzfwb.com/wp-admin",
+   "item": "10828751822"
+  },
+  "Mercedes-Benz of South Orlando": {
+   "cms": "https://dealer.signin.coxautoinc.com/",
+   "item": "13080324071"
+  },
+  "Merit Auto Group": {
+   "cms": "https://dealers.overfuel.com/login",
+   "item": "12169103658"
+  },
+  "One Legacy Motors": {
+   "cms": "https://onelegacymotors.com/wp-admin/",
+   "item": "12709545308"
+  },
+  "Parks Lincoln of Longwood": {
+   "cms": "https://mycoxautomotive.coxautoinc.com/",
+   "item": "10828738639"
+  },
+  "Phillips Buick GMC": {
+   "cms": "https://cms.dealeron.com/",
+   "item": "13080375610"
+  },
+  "Ron Carter CDJR": {
+   "cms": "https://www.roncartercdjr.com/wp/wp-admin/",
+   "item": "10828734602"
+  },
+  "Sierra - Beach Cities Toyota Westminster": {
+   "cms": "https://www.beachcitiestoyotawestminster.com/wp/wp-admin/",
+   "item": "10828738772"
+  },
+  "Sierra - Felix Chevrolet": {
+   "cms": "https://felixchevrolet.com/wp/wp-admin",
+   "item": "10828751835"
+  },
+  "Sierra - Land Rover Cerritos": {
+   "cms": "https://www.landrovercerritos.com/wp/wp-admin",
+   "item": "10828738773"
+  },
+  "Sierra - Los Angeles CDJR": {
+   "cms": "https://www.lacdjr.com/wp/wp-admin/",
+   "item": "10828751794"
+  },
+  "Sierra CDJR of Monrovia": {
+   "cms": "https://www.monroviacdjr.com/wp/wp-admin/",
+   "item": "10828734696"
+  },
+  "Sierra Chevrolet of Monrovia": {
+   "cms": "https://www.sierrachevrolet.com/wp/wp-admin/",
+   "item": "10828734698"
+  },
+  "Sierra Honda of Monrovia": {
+   "cms": "https://www.sierrahondaofmonrovia.com/wp/wp-admin/",
+   "item": "10828751771"
+  },
+  "Sierra Nissan of Duarte": {
+   "cms": "https://www.nissanofduarte.com/wp/wp-admin/",
+   "item": "10828734723"
+  },
+  "Sierra Subaru of Monrovia": {
+   "cms": "https://www.sierrasubaru.com/wp/wp-admin",
+   "item": "10828751863"
+  },
+  "Singing River CDJR": {
+   "cms": "https://www.singingrivercdjr.com/wp/wp-admin/",
+   "item": "10828751938"
+  },
+  "Singing River Honda": {
+   "cms": "https://www.singingriverhonda.com/wp/wp-admin",
+   "item": "10828751846"
+  },
+  "Singing River Nissan": {
+   "cms": "https://www.singingrivernissan.com/wp/wp-admin/",
+   "item": "10828738760"
+  },
+  "Subaru of Bend": {
+   "cms": "https://www.subaruofbend.com/wp/wp-admin/",
+   "item": "12223899441"
+  },
+  "Toyota of Fort Walton Beach": {
+   "cms": "https://www.toyotafwb.com/wp/wp-admin/",
+   "item": "10828734608"
+  },
+  "TS&S Ford": {
+   "cms": "https://www.tsandsfordmadras.com/wp/wp-login.php",
+   "item": "12259187293"
+  },
+  "Volvo Cars of Queens": {
+   "cms": "https://getapollo.com/",
+   "item": "13080175119"
+  },
+  "Davis Acura": {
+   "cms": "https://getapollo.com/",
+   "item": "10828738741"
+  },
+  "Ed Koehn Ford of Wayland": {
+   "cms": "https://apps.dealercenter.coxautoinc.com/welcome/",
+   "item": "10828738761"
+  },
+  "Hessert Chevrolet (Philadelphia)": {
+   "cms": "https://cms.dealeron.com/dash/dist/cms/#/26508/Dashboard",
+   "item": "10828738692"
+  },
+  "Hessert Chevrolet of Cherry Hill": {
+   "cms": "https://cms.dealeron.com/dash/dist/cms/#/26508/Dashboard",
+   "item": "10828734593"
+  },
+  "Kayser Chrysler Center of Sauk Prairie": {
+   "cms": "https://getapollo.com/",
+   "item": "10828751789"
+  },
+  "Koeppel Nissan": {
+   "cms": "https://dealer.signin.coxautoinc.com/?solutionID=DDC_prod&clientId=3d6741afc7c24cc3afa770223a04fae4",
+   "item": "10828734609"
+  },
+  "Koons Lincoln of Bethesda": {
+   "cms": "https://cms.dealeron.com/dash/dist/cms/#/21763/Dashboard",
+   "item": "10828734548"
+  },
+  "Lucas Smith CDJR": {
+   "cms": "https://www.lucassmithdodge.net/wp/wp-admin",
+   "item": "10828734603"
+  },
+  "Century Buick GMC": {
+   "cms": "https://cms.dealeron.com/",
+   "item": "13355690744"
+  },
+  "Eagle Buick GMC": {
+   "cms": "https://cms.dealeron.com/",
+   "item": "13355685586"
+  },
+  "Huston Chevrolet": {
+   "cms": "https://cms.dealeron.com/",
+   "item": "13355678372"
+  },
+  "Huston CDJR": {
+   "cms": "https://www.hustoncdjr.com/wp/wp-admin",
+   "item": "13355699632"
+  },
+  "Wray Ford": {
+   "cms": "https://getapollo.com/",
+   "item": "13560079243"
+  },
+  "Mercedes-Benz of Columbus": {
+   "cms": "https://www.mercedesbenzofcolumbus.com/wp/wp-admin/",
+   "item": "13546119401"
+  },
+  "Geri Lynn Nissan": {
+   "cms": "",
+   "item": "13355680669"
+  }
  }
 }

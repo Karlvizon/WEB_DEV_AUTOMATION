@@ -66,6 +66,8 @@ def toast(title, body, anchor="", fix_sid=None):
 # ---------------------------------------------------------------- auto-update (watcher)
 AUTO = {"proc": None, "busy": False}
 FULL_EVERY = 30          # minutes: a full refresh at least this often catches new assignments on any board
+OFF_SHIFT_EVERY = 30     # minutes: outside the shift the check still runs this often (2026-11-20: One Legacy Motors
+                         # pages assigned 09:48 only showed at 19:01 because nothing was checked off-shift)
 
 
 def in_window(cfg, now=None):
@@ -185,6 +187,22 @@ def watch_state():
     return w
 
 
+def new_during_job(w):
+    """Quick read-only check while a Claude run is going: pop-up for each page newly assigned on monday (once)."""
+    r = subprocess.run([PY, "-I", str(HERE / "refresh_monday.py"), "--signature"], cwd=str(HERE), capture_output=True,
+                       text=True, encoding="utf-8", errors="replace", timeout=90, creationflags=NOWIN)
+    w["last_check"] = now_s()
+    if r.returncode == 0:
+        new = json.loads(r.stdout.strip().splitlines()[-1]).get("new") or []
+        told = set(w.get("told_new") or [])
+        fresh = [i for i in new if str(i) not in told]
+        if fresh and settings.get("alert_new") is not False:
+            toast("New page assigned on monday", f"{len(fresh)} new page(s) - they appear in the tracker when the "
+                  "current Claude run ends.", "assigned")
+        w["told_new"] = sorted(told | {str(i) for i in new})[-200:]
+    write_json(WATCH, w)
+
+
 def watcher(job_running):
     """Background loop started by server.py. job_running() -> True while a manual refresh job runs."""
     while True:
@@ -195,13 +213,17 @@ def watcher(job_running):
             w = read_json(WATCH, {})
             force = w.pop("force", False)                # "Check monday now" works any time, even outside the shift
             full = force == "full"                       # header Refresh: full re-read even if the quick check sees no change
-            if not settings.token() or (not force and (not cfg.get("watch_enabled") or not in_window(cfg))):
+            if not settings.token() or (not force and not cfg.get("watch_enabled")):
                 continue
             last = w.get("last_check")
-            every = max(1, int(cfg.get("watch_minutes") or 2))
+            every = max(1, int(cfg.get("watch_minutes") or 2)) if in_window(cfg) else OFF_SHIFT_EVERY
             if not force and last and datetime.now() - datetime.strptime(last, "%Y-%m-%d %H:%M:%S") < timedelta(minutes=every):
                 continue
             if job_running():
+                # 2026-11-20: a 72-minute Start run used to pause every check. Still ask monday for NEW assignments
+                # (read-only, no tracker files touched) and pop up; the full refresh follows when the run ends,
+                # because the saved signature is left alone and differs then.
+                new_during_job(w)
                 continue
             AUTO["busy"] = True
             r = subprocess.run([PY, "-I", str(HERE / "refresh_monday.py"), "--signature"], cwd=str(HERE), capture_output=True,
@@ -750,7 +772,8 @@ def dealer_card(name):
         plat = ov or ""
     folder = dealer_folder(name, "MLP")
     city = dealer_folder(name, "City Page")
-    return {"dealer": name, "platform": plat, "fonts": base.get("fonts") or [], "cta_links": base.get("cta_links") or {},
+    lk = (st.get("dealer_links") or {}).get(name) or {}
+    return {"dealer": name, "platform": plat, "cms_url": lk.get("cms") or "", "cred_url": lk.get("cred") or "", "fonts": base.get("fonts") or [], "cta_links": base.get("cta_links") or {},
             "cdn": base.get("cdn") or "", "colours": base.get("colours") or [], "from_project": base.get("from_project") or "",
             "folder": str(folder) if folder else "", "city_folder": str(city) if city else "",
             "open": [{"sid": i["subitem_id"], "mlp": i["mlp"], "status": i["status"], "due": i.get("due"), "type": i.get("type")} for i in items],
@@ -1422,7 +1445,7 @@ SEO_KEYS = ("seo", "meta", "title tag", "page title", "description", "url", "slu
 _OK_CAPS = set("ACTIV HEMI AWD FWD RWD SRT LED SUV SUVS MSRP CDJR GMC RAM USB GPS EPA MPG BMW AMG SRX XLT LTZ RST ZR2 TRX EV "
                "AT4 HD LB CPO VIN APR ADAS RV SXT GTS TPMS NHTSA IIHS II III IV VI HP DOHC SOHC CVT AM PM FAQ FAQS DDC CTA "
                "NAV AKG MOAB DSSV TNGA XSE XLE USA AL GA FL TX CA NY NJ PA MS AZ NV OH MI IL NC SC TN VA KY LA OK AR "
-               "GLC GLE GLS GLA GLB CLA CLE EQS EQE EQB MBUX".split())
+               "GLC GLE GLS GLA GLB CLA CLE EQS EQE EQB MBUX HVAC SEL XRT".split())
 _OK_CAMEL = re.compile(r"^(my[A-Z]\w*|CarPlay|OnStar|SiriusXM|eTorque|MyLink|LaneSense|ParkSense|ParkView|IntelliBeam|"
                        r"QuietTuning|WildPeak|BlueCruise|SmartWay|AutoStick|TowMax|MultiPro|PowerShift|DuraMax|EcoBoost|"
                        r"SelecTerrain|ProGrade|SafetySense|SmartSense|HondaSense|MaxCare|iPhone|YouTube|WiFi|McKinney|"
@@ -1542,7 +1565,7 @@ def seo_check(folder):
         if lvl > last + 1:
             jumps.append(f"H{last} -> {t.upper()} \"{txt[:40]}\"")
         last = lvl
-        caps = [m.group(0) for m in re.finditer(r"\b[A-Z][A-Z'’]{2,}\b(?![®™℠])", txt)   # X-MODE® = brand mark, keeps caps
+        caps = [m.group(0) for m in re.finditer(r"\b[A-Z][A-Z'’]{2,}\b(?![®™℠])", re.sub(r"\([A-Z][A-Z0-9]{1,6}\)", "", txt))  # "(FCA)" acronym   # X-MODE® = brand mark, keeps caps
                 if re.sub("['’]", "", m.group(0)) not in _OK_CAPS]
         if caps:
             caps_h.append(f"{t.upper()} \"{txt[:45]}\"")

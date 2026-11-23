@@ -40,6 +40,7 @@ Rules live in your own build rules (see `my build rules\HOW TO ADD YOUR BUILD ME
 |---|---|
 | dealer-inspire | `cms-fields/<name>.html` (wrapper + font link + `<style>` + markup), `.css`, `.js` |
 | one-file | `cms-fields/<name>.html` = the whole wrapper: font link + `<style>` + markup + `<script>`; three-field copies go to `tools/_work/fields/` only for the lint/placement tests |
+| one-file, Apollo (`"cms": "Apollo"`) | one file in the Apollo reference structure: `<script>` const css (fonts as @import) + `.main-div` markup + `<script>` page JS and Apollo CMS fixes (`tools/apollo_style.py`, user rule 2026-11-20); images are JPEG (`assets/jpg/`, the pack uploads .jpg) - transparent icons go inline SVG |
 
 ## Components (`components/components.css`, `.js`; `reference-page.html` shows every one in use)
 

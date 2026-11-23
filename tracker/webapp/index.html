@@ -188,6 +188,11 @@ input.num{border-radius:8px;text-align:center;padding:5px!important}
 .updchip{border:0;border-radius:999px;background:#FDB022;color:#1d2939;font-weight:700;font-size:12px;padding:5px 12px;cursor:pointer}
 .snow{display:inline-block;margin:4px 0 0 0;border:0;border-radius:999px;background:#12B76A;color:#fff;font-size:11px;font-weight:600;padding:3px 10px;cursor:pointer;white-space:nowrap}.snow:hover{background:#0E9F5C}
 td.step .snow{display:block;width:max-content}
+.dbtn{display:inline-block;font-size:11px;font-weight:700;line-height:1;color:#3538CD;background:#EEF4FF;border:1px solid #C7D7FE;border-radius:6px;padding:4px 9px;margin-left:6px;text-decoration:none;vertical-align:middle;white-space:nowrap}.dbtn:hover{background:#3538CD;color:#fff;border-color:#3538CD}
+html[data-theme="dark"] .dbtn{color:#C7D7FE;background:#1E2A4A;border-color:#3E4C7A}html[data-theme="dark"] .dbtn:hover{background:#6172F3;color:#fff}
+.hd .dbtn{color:#fff;background:#ffffff1f;border-color:#ffffff66}.hd .dbtn:hover{background:#fff;color:var(--navy)}
+.dbtns{display:inline-flex;gap:6px;margin-left:6px;vertical-align:middle;white-space:nowrap}.dbtns .dbtn{margin-left:0}
+.dline{display:flex;flex-wrap:wrap;align-items:center;gap:4px 0;margin-bottom:6px}.dline .dsub{margin:0;padding:0;border:0}.dline .dbtns{margin-left:8px}
 .ccb{border:0;background:none;color:#6366f1;cursor:pointer;padding:0 3px;margin-left:6px;vertical-align:-3px;opacity:.3}.ccb:hover{opacity:1}tr:hover .ccb{opacity:.85}
 @media (max-width:1000px){.ccb{opacity:.85}}
 /* ===== theme toggle ===== */
@@ -607,6 +612,12 @@ tr.row td{padding-top:10px;padding-bottom:10px}
  .ctl button svg{margin:0}
  .ctl .usechip{font-size:10.5px;padding:4px 8px}
  #mhealth .mh{font-size:0;padding:4px 6px}#mhealth .mh i{margin:0}
+ .ctl .hmore>button{font-size:15px!important}                          /* ⋯ keeps its dots on phones */
+ .hpop button{font-size:13px!important;padding:8px 12px!important}     /* menu items keep their words */
+ .hpop #mhealth .mh{font-size:12px}
+ #sess{max-width:46vw}
+ .ctl .hmore .hpop{position:fixed;left:12px;right:12px;top:64px;min-width:0}   /* phones: the menu opens under the header, on screen */
+ .hpop .theme::before{content:none}.hpop .lab{display:inline!important;font-size:13px}
  nav .tabbar,nav .side{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);overflow-x:auto}
  .since{padding:8px 12px}.since .sh{flex-wrap:nowrap;margin-bottom:0;gap:8px}.since .sh b{font-size:13px;white-space:nowrap}
  .since .sh .small,.since .sh span:not(.sbtn){display:none}.since .sh .sbtn{padding:5px 10px;font-size:12px}
@@ -633,6 +644,8 @@ nav input{min-width:150px;flex:1 1 150px}
 @media (min-width:1001px) and (max-width:1460px){nav .tabbar button{padding-left:9px;padding-right:9px}nav .side .ib{padding:6px 6px}nav .side{gap:2px}
  nav .ib.lab .ibl{font-size:11.5px}.foldnote{font-size:11px;padding-left:6px;padding-right:6px}}
 @media (min-width:1001px) and (max-width:1400px){nav .tabbar button.foldnote{font-size:10.5px!important;padding:4px 6px!important;letter-spacing:-.01em}}
+/* 701-1000 px (2026-11-20 bug scan): the one-row tab bar was 24px wider than the window -> the whole page scrolled sideways */
+@media (min-width:701px) and (max-width:1179px){nav .tabbar,nav .side{max-width:100%;min-width:0;overflow-x:auto}}
 /* "How to use" in Settings (2026-11-19) */
 .howto .ht{border-top:1px solid var(--line);padding:2px 0}.howto .ht:first-of-type{border-top:0}
 .howto .ht>summary{cursor:pointer;font-weight:700;font-size:14px;padding:9px 2px;list-style:none;display:flex;align-items:center;gap:8px}
@@ -699,12 +712,71 @@ html[data-theme="dark"] .dgood{color:#47CD89}html[data-theme="dark"] .dbad{color
 .dsub{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}.dsub h3{margin-bottom:4px}
 @media (max-width:1300px){.dkpis{grid-template-columns:repeat(3,minmax(0,1fr))}.dgrid.three{grid-template-columns:1fr 1fr}}
 @media (max-width:900px){.dgrid,.dgrid.three{grid-template-columns:1fr}.dkpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dkn{font-size:24px}}
+/* 2026-11-23 simpler view: whose-turn chip, city filter, Do this next, header "more" menu */
+.turn{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 7px;border-radius:999px;background:var(--tb);color:var(--tc);font-size:12px;font-weight:700;white-space:nowrap;cursor:help}
+.turn .ti{font-size:12px}.turn .tw{font-weight:500}
+[data-theme="dark"] .turn{background:color-mix(in srgb,var(--tc) 22%,transparent);color:#fff}
+.tsub{margin-top:4px;display:flex;flex-wrap:wrap;gap:4px}.tsub .mst{font-size:11px}
+table.list tr.row.compact .turn .tw{display:none}
+.cityf{border:1px solid var(--line);background:var(--card);color:inherit;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
+.cityf.on{background:#175CD3;border-color:#175CD3;color:#fff}.cityf .ct{margin-left:4px;opacity:.8}
+.donext{margin:0 0 14px;border-left:4px solid #F79009}
+.dlist.dn li{grid-template-columns:24px minmax(0,1fr) auto}.dlist.dn .ti{font-size:16px;text-align:center}
+.dlist.dn .dn2>span:first-child{font-size:14px}
+.hmore{position:relative}
+.ctl .hmore>button{background:rgba(255,255,255,.14);padding:8px 12px;font-size:15px;line-height:1}
+.ctl .hmore>button.alert::after{content:"";position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:#F79009;box-shadow:0 0 0 2px var(--navy)}
+.hpop{display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--navy);border-radius:12px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:30;min-width:240px;flex-direction:column;gap:8px;align-items:stretch}
+.hmore.open .hpop{display:flex}
+.hpop>*{justify-content:flex-start}.hpop #job{display:block!important;cursor:pointer}.hpop #job:empty{display:none!important}
+.hpop .hpl{font-size:11px;opacity:.65;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.pc-mon{font-size:11.5px;color:var(--muted);margin-top:4px}
+.ctl .bhelp{background:rgba(255,255,255,.14);padding:8px 13px;font-size:14px;line-height:1}
+/* new-user setup form (covers the tracker until finished) */
+#setup{position:fixed;inset:0;z-index:200;background:linear-gradient(135deg,#101828,#1D2939 55%,#3E1C96);flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:40px 16px}
+.subrand{color:#fff;font-weight:800;font-size:20px;display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.subrand .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#4F8DF7,#7B4FC4);display:grid;place-items:center;font-size:13px}
+.sucard{background:var(--card);color:var(--ink,#101828);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.4);padding:26px 30px;width:100%;max-width:580px}
+.sucard h2{margin:6px 0 8px;font-size:21px}.sucard p{margin:0 0 12px;line-height:1.5}
+.sudots{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.sudots span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--muted);background:var(--soft);border-radius:999px;padding:3px 10px 3px 4px}
+.sudots span i{font-style:normal}
+.sudots span.on{background:#175CD3;color:#fff}.sudots span.done{background:#D1FADF;color:#05603A}
+.sulist{margin:0 0 14px;padding-left:4px;list-style:none;line-height:1.9}.sulist.num{list-style:decimal;padding-left:22px;line-height:1.7}
+.sucard input[type=password],.sucard input:not([type]),.sucard select{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:var(--card);color:inherit}
+.sufield{display:block;margin-bottom:12px}.sufield span{display:block;font-weight:700;font-size:13px;margin-bottom:5px}
+.sufield small{display:block;color:var(--muted);font-size:12px;margin-top:4px}.sufield b.ok{color:#079455;font-size:12px}.sufield b.no{color:#B54708;font-size:12px}
+.surow{display:flex;gap:12px}.surow .sufield{flex:1}
+.sucheck{display:flex;gap:8px;align-items:center;font-size:13px;margin:4px 0 10px}
+.suok{background:#ECFDF3;color:#05603A;border-radius:10px;padding:10px 12px;font-size:13px;margin:0 0 12px}
+.suerr{display:none;background:#FEF3F2;color:#B42318;border-radius:10px;padding:10px 12px;font-size:13px;margin:10px 0 0}
+.suact{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.sutools{list-style:none;padding:0;margin:0 0 12px}.sutools li{padding:9px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:2px;font-size:13px}
+.sutools li.ok b{color:#079455}.sutools li.no b{color:#B42318}.sutools li span{color:var(--muted)}
+/* Start here guide */
+#guide{position:fixed;inset:0;z-index:150;background:rgba(16,24,40,.55);align-items:center;justify-content:center;padding:16px}
+.gcard{position:relative;background:var(--card);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:24px 28px;width:100%;max-width:640px;max-height:calc(100vh - 32px);overflow-y:auto}
+.gcard h2{margin:4px 0 12px;font-size:21px;display:flex;gap:10px;align-items:center}.gk{font-size:11.5px;font-weight:700;color:#175CD3;text-transform:uppercase;letter-spacing:.06em}
+.gx{position:absolute;top:12px;right:12px;border:0;background:var(--soft);border-radius:8px;width:30px;height:30px;cursor:pointer;color:inherit}
+.gb{font-size:14px;line-height:1.55}.gb ul{margin:0 0 10px;padding-left:20px}.gb li{margin-bottom:5px}.gb h4{margin:0 0 6px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.g2>div{background:var(--soft);border-radius:12px;padding:12px 14px}
+.gflow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 14px;font-size:13px;color:var(--muted)}
+.gflow span{background:var(--soft);color:var(--ink,inherit);border-radius:999px;padding:6px 11px;font-weight:600}
+.gtab{width:100%;border-collapse:collapse;margin-bottom:10px}.gtab td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top;font-size:13.5px}
+.gtab td:first-child{width:110px}.gtab small{display:block;color:var(--muted);font-size:11px}
+.gtip{background:#EFF8FF;color:#175CD3;border-radius:10px;padding:9px 12px;font-size:13px}
+[data-theme="dark"] .gtip{background:rgba(23,92,211,.2);color:#B2DDFF}[data-theme="dark"] .suok{background:rgba(7,148,85,.2);color:#A6F4C5}[data-theme="dark"] .suerr{background:rgba(180,35,24,.25);color:#FECDCA}
+.gnav{display:flex;align-items:center;gap:8px;margin-top:18px}.gdots{display:flex;gap:6px;margin-right:auto}
+.gdots i{width:8px;height:8px;border-radius:50%;background:var(--line);cursor:pointer}.gdots i.on{background:#175CD3;width:20px;border-radius:4px}
+@media (max-width:700px){.g2{grid-template-columns:1fr}.surow{flex-direction:column;gap:0}.sucard,.gcard{padding:20px 18px}#setup{padding:20px 12px}
+ .ctl .bhelp{font-size:14px!important}}
 
 /* --- wide screens: the tabs become a labelled sidebar (Work / Views / Reports / Settings) --- */
 @media (min-width:1180px){
- body{display:grid;grid-template-columns:232px minmax(0,1fr);align-items:start}
+ /* rows 2-5 stay their own height; the empty 1fr row 6 takes the menu's extra height (2026-11-20: big gap above a short list) */
+ body{display:grid;grid-template-columns:232px minmax(0,1fr);grid-template-rows:auto auto auto auto auto 1fr;align-items:start}
  body>header{grid-column:1/-1;grid-row:1}
- body>#tabs{grid-column:1;grid-row:2/span 5;position:sticky;top:62px;max-height:calc(100vh - 62px);overflow-y:auto;
+ body>#tabs{grid-column:1;grid-row:2/7;position:sticky;top:62px;max-height:calc(100vh - 62px);overflow-y:auto;
   display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:16px 10px 24px 16px;flex-wrap:nowrap}
  body>#tiles,body>#unplaced,body>#nownext,body>main{grid-column:2;min-width:0}
  body>#tiles{grid-row:2}body>#unplaced{grid-row:3}body>#nownext{grid-row:4}body>main{grid-row:5}
@@ -733,11 +805,19 @@ html[data-theme="dark"] #tabs input{background:#111827 url("data:image/svg+xml,%
 <header>
   <h1><span class="logo">WD</span>Web Dev Tracker</h1><span id="me" class="me"></span>
   <span id="auto" class="badge"></span>
-  <div class="hmeta"><span class="meta" id="meta"></span><span class="meta" id="watch"></span></div><span id="mhealth"></span>
+  <div class="hmeta"><span class="meta" id="meta"></span><span class="meta" id="watch"></span></div>
   <div class="ctl">
     <span id="job" onclick="toggleLog()"></span><span id="sess" style="display:none;font-size:12px;background:rgba(255,255,255,.12);border-radius:999px;padding:6px 12px"></span>
-    <button class="theme" id="bTheme" onclick="cycleTheme()">◐ Auto</button>
-    <button class="b-refresh" id="bRefresh" onclick="refreshNow()" title="Re-read everything from monday now (use it when the tracker looks behind monday)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg><span class="lab">Refresh</span></button>
+    <!-- 2026-11-23 simpler header: the less-used controls live in one "more" menu (orange dot = something needs a look) -->
+    <button class="bhelp" id="bHelp" onclick="openGuide()" title="Start here: how the tracker and Claude work (5 short cards)">?</button>
+    <div class="hmore" id="hmore"><button id="bMore" onclick="event.stopPropagation();$('#hmore').classList.toggle('open')" title="More: monday check, last Claude run, Claude usage, Refresh, theme">⋯</button>
+     <div class="hpop" onclick="event.stopPropagation()">
+      <span class="hpl">monday</span><span id="mhealth"></span>
+      <span class="hpl">Last Claude run</span><span id="lastrun" onclick="toggleLog()" style="cursor:pointer;font-size:12px" title="Click to show the log">-</span>
+      <span class="hpl">Claude usage</span><span id="usehere"></span>
+      <button class="b-refresh" id="bRefresh" onclick="refreshNow()" title="Re-read everything from monday now (use it when the tracker looks behind monday)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg><span class="lab">Refresh from monday</span></button>
+      <button class="theme" id="bTheme" onclick="cycleTheme()">◐ Auto</button>
+     </div></div>
     <button class="b-start" id="bStart" onclick="run('start')" title="Claude Code works the queue: revisions first, then Assigned MLPs"><svg width="11" height="12" viewBox="0 0 11 12"><path d="M1 1l9 5-9 5z" fill="#fff"/></svg>Start</button>
     <button class="b-stop" id="bStop" onclick="run('stop')" title="Stop the automation and halt any running Claude job"><svg width="10" height="10"><rect width="10" height="10" rx="2" fill="#fff"/></svg>Stop</button>
   </div>
@@ -748,6 +828,9 @@ html[data-theme="dark"] #tabs input{background:#111827 url("data:image/svg+xml,%
 <section id="nownext" style="display:none"></section>
 <main id="view"></main>
 <aside id="drawer"></aside>
+<!-- new-user setup form + Start here guide (2026-11-23) -->
+<div id="setup" style="display:none"><div class="subrand"><span class="logo">WD</span>Web Dev Tracker</div><div id="setupcard" class="sucard"></div></div>
+<div id="guide" style="display:none" onclick="if(event.target===this)closeGuide()"><div id="guidecard" class="gcard"></div></div>
 <div id="zoom" onclick="this.style.display='none'"><img alt=""></div>
 <div class="toast" id="toast"></div>
 <div id="joblog" onclick="this.style.display='none'"></div>
@@ -781,6 +864,20 @@ const needsYou=i=>waitingOnYou(i)&&!doneNotPosted(i)&&!/^Say 'start'/.test(i.nex
 const overdueUs=i=>i.days_left!=null&&i.days_left<0&&!WAITING.includes(i.status);
 const isPosted=i=>!!i.posted&&String(i.posted).slice(0,16)>=String(i.finished||"").slice(0,16);   // a later revision un-posts it
 const doneNotPosted=i=>i.claude==="Claude is done"&&NOT_POSTED.includes(i.status)&&!isPosted(i);
+// "Whose turn" (user, 2026-11-23: "the tracker is somehow confusing" - approved all 5 suggestions): one label per page
+// instead of monday status + Claude status + stage. monday and Claude statuses stay in the hover text.
+const claudeTurn=i=>turnOf(i)==="claude";   // one turn per page: a page with no monday status is On hold, not Claude's
+function turnOf(i){const s=stageOf(i);
+ if(s==="claude"||(s==="todo"&&i.claude!=="Claude is done"))return"claude";
+ if(s==="qa")return"qa";if(s==="hold")return"hold";return"you"}
+const TURN={you:["👤","Your turn","#B54708","#FEF0C7"],claude:["🤖","Claude's turn","#175CD3","#D1E9FF"],qa:["🔍","With QA","#5925DC","#EBE9FE"],hold:["⏸","On hold","#475467","#EAECF0"]};
+function turnWhat(i){const t=turnOf(i);
+ if(t==="you")return doneNotPosted(i)?"post it":needsYou(i)?"needs you":isPosted(i)?"set monday to Waiting for Review":"check it";
+ if(t==="claude")return i.claude==="Claude working on it"?"working now":i.claude==="Revision needed"?"fix the QA revision":!i.status?"waiting for a monday status":"not started";
+ if(t==="qa")return"nothing to do";return i.status?String(i.status).toLowerCase():"no monday status yet - Claude waits for it"}
+function turnChip(i){const t=turnOf(i),c=TURN[t];
+ return `<span class="turn" style="--tc:${c[2]};--tb:${c[3]}" title="monday: ${esc(i.status||"no status")} · Claude: ${esc(i.claude)}"><span class="ti">${c[0]}</span>${c[1]}<span class="tw"> · ${esc(turnWhat(i))}</span></span>`}
+let CITY=false;   // "City pages only" filter (was the City Pages tab)
 // Final Mobile Check revisions (user, 2026-11-16: "if there is a revision for final mobile check include it on the MLP tracker so that I can see it")
 // The engine writes one line per QA revision in i.revisions: "[2026-11-16 00:47] Final Mobile Check - <QA>: <points> (saved ...)".
 const REV_RE=/^\[(\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2})?)\]\s*(Final MLP|Final Mobile Check|City Page) - ([^:]+):\s*(.*)$/;
@@ -809,7 +906,8 @@ function revLabels(i){
  if(src.has("Final Mobile Check"))out.push("Mobile revision");
  if(!out.length&&i.status==="Needs Revision")out.push(i.mobile_only?"Mobile revision":i.type==="City Page"?"City page revision":"Final MLP revision");
  return i.mobile_only?out.filter(l=>l==="Mobile revision"):out}   // Final MLP approved, only the Final Mobile Check is open
-const isMlpRev=i=>revLabels(i).some(l=>l!=="Mobile revision"),isMobRev=i=>revLabels(i).includes("Mobile revision");
+const isMlpRev=i=>revLabels(i).includes("Final MLP revision"),   // city page revisions live in City Pages (2026-11-20: Orlando showed here)
+ isMobRev=i=>revLabels(i).includes("Mobile revision");
 function revChips(i){const done=i.claude==="Claude is done";
  return revLabels(i).map(l=>`<span class="mst${l==="Mobile revision"?" mob":""}" style="--mc:${MC["Needs Revision"]}" title="${done?"Claude fixed it - post the update on the "+(l==="Mobile revision"?"Final Mobile Check":"Final MLP")+" subitem":"QA asked for changes on the "+(l==="Mobile revision"?"Final Mobile Check (phone view)":l==="City page revision"?"city page":"Final MLP")}">${l==="Mobile revision"?PHONE:""}${l}</span>`).join(" ")}
 const PHONE='<svg width="9" height="12" viewBox="0 0 9 12" style="vertical-align:-1px;margin-right:4px"><rect x=".75" y=".75" width="7.5" height="10.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="4.5" cy="9.2" r=".8" fill="currentColor"/></svg>';
@@ -828,10 +926,53 @@ async function markPosted(sid,on){
 function remind(sids){const n=sids.length;
  toast(`Marked ${n>1?n+" pages":"as"} posted ✓ — now set ${n>1?"them":"it"} to Waiting for Review on monday`,7000)}
 async function vsc(dealer,type){const j=await (await fetch("/api/vscode",{method:"POST",body:JSON.stringify({dealer,type})})).json();toast(j.ok?j.msg:j.error)}
+// CMS + Credentials (2026-11-20): links only, from monday "Dealer Login and Setup" - logins stay on monday
+const dlinks=(dealer,cls="dbtn")=>{const l=((D&&D.state&&D.state.dealer_links)||{})[dealer]||{};const b=(l.cms?`<a class="${cls}" href="${esc(l.cms)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open the dealer's CMS (backend) - link from monday Dealer Login and Setup">CMS</a>`:"")+(l.cred?`<a class="${cls}" href="${esc(l.cred)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open this dealer on monday Dealer Login and Setup - the username and password are there">Credentials</a>`:"");return b?`<span class="dbtns">${b}</span>`:""};
 const ccBtn=t=>`<button class="ccb" title="Open in Claude Code (VS Code) - ${typeof t==="object"?"the dealer folder":"this page's folder"}, with the details typed in" onclick="event.stopPropagation();openClaude(${esc(JSON.stringify(t))})">${ICON.claude}</button>`;   // 2026-11-19
 const vsBtn=(d,t)=>`<button class="vs" title="Open this dealer's folder in VS Code" onclick="event.stopPropagation();vsc(${esc(JSON.stringify(d))},'${t||"MLP"}')">VS Code</button>`;
-const TABS=[["dash","Dashboard",null],["all","All",i=>true],["post","Ready to post",i=>doneNotPosted(i)],
- ["revision","Final MLP revision",isMlpRev],["mobile","Mobile revision",isMobRev],["city","City Pages",i=>i.type==="City Page"],["review","Waiting for Review",i=>i.status==="Waiting for Review"],
+// "Not started" tab (user, 2026-11-20: "add a new tab for the things that are not yet being worked by claude, I want to see
+// all of them"): every page / revision Claude has not started (any monday status, blank included), blogs waiting to be
+// built, and - folded - other open monday tasks Claude does not do.
+const nsPage=i=>i.claude==="Not started"||i.claude==="Revision needed";
+function nsBlogs(){const o=[];if(BLOGS&&BLOGS.dealers)for(const d of BLOGS.dealers)for(const x of d.upcoming||[])if(x.turn)o.push({...x,dealer:d.name});return o}
+function nsOther(){if(!ASG||!ASG.projects)return[];const ids=new Set(((D&&D.state&&D.state.items)||[]).map(i=>i.subitem_id)),o=[];
+ for(const p of ASG.projects)for(const s of p.subitems)if(!ids.has(s.subitem_id)&&["Assigned","Working on it","Stuck","Needs Revision","On-Hold"].includes(s.status))o.push({...s,dealer:p.dealer,project:p.project,board_id:p.board_id,item_id:p.item_id});
+ return o}
+const nsCount=()=>((D&&D.state&&D.state.items)||[]).filter(claudeTurn).length;   // pages only - blogs are counted on the Blogs tab
+function notStartedView(){
+ const ql=q.toLowerCase(),hit=(...a)=>!ql||a.join(" ").toLowerCase().includes(ql),today=ymd(new Date());
+ const items=((D.state||{}).items||[]).filter(claudeTurn).filter(i=>hit(i.dealer,i.mlp,i.status));
+ const working=items.filter(i=>i.claude==="Claude working on it");
+ const revs=items.filter(i=>i.claude==="Revision needed"),pages=items.filter(i=>i.claude==="Not started");
+ const blogs=nsBlogs().filter(x=>hit(x.dealer,x.name)),other=nsOther().filter(x=>hit(x.dealer,x.project,x.name));
+ const byDue=(a,b)=>String(a.due||a.date||"9999").localeCompare(String(b.due||b.date||"9999"));
+ const due=d=>{if(!d)return '<span class="small grey">no due date</span>';const late=d<today;return `<span class="small${late?" late":""}" style="${late?"color:#D92D20;font-weight:600":""}">${late?"late · ":"due "}${esc(fmtDate(d))}</span>`};
+ const st=s=>`<span class="achip" style="--mc:${MC[s]||"#98A2B3"}" title="monday status">${esc(s||"no status on monday")}</span>`;
+ const why=i=>!i.status?"blank monday status - Claude skips it until it is set":i.claude==="Revision needed"?"QA asked for changes - Claude fixes it on Start":isPending(i)?"in Claude's queue - press Start or Start now":"monday status keeps it out of Claude's queue";
+ const card=(title,list,row)=>{const byD={};list.forEach(x=>(byD[x.dealer]=byD[x.dealer]||[]).push(x));
+  return Object.entries(byD).sort((a,b)=>byDue(a[1].sort(byDue)[0],b[1].sort(byDue)[0])||a[0].localeCompare(b[0])).map(([d,a])=>
+   `<div class="bcard"><h3><span class="dlink" onclick="openDealer(${esc(JSON.stringify(d))})">${esc(d)}</span><span class="ct">${a.length}</span></h3>${a.map(row).join("")}</div>`).join("")};
+ const pageRow=i=>`<div class="arow" style="cursor:pointer" onclick="openItem(${i.subitem_id})"><div class="atl"><b>${esc(i.mlp)}</b>${i.type==="City Page"?'<span class="type">CITY</span>':""}${startBtn(i)}</div>
+  <div class="achips">${st(i.status)} ${due(i.due)} <span class="small grey">· ${esc(why(i))}</span></div></div>`;
+ const blogRow=x=>`<div class="arow"><div class="atl"><b>${esc(x.name)}</b><a class="mlink" href="${esc(x.url)}" target="_blank" rel="noopener">monday ↗</a>${x.doc?`<a class="mlink" href="${esc(x.doc)}" target="_blank" rel="noopener">doc ↗</a>`:""}</div>
+  <div class="achips">${st(x.status)} ${due(x.date)} <span class="small grey">· no blog folder yet - build it from the Blogs tab</span></div></div>`;
+ const otherRow=x=>`<div class="arow"><div class="atl"><b>${esc(x.project)}</b> <span class="small">${esc(x.name)}</span><a class="mlink" href="https://a3-brands.monday.com/boards/${x.board_id}/pulses/${x.item_id}" target="_blank" rel="noopener">monday ↗</a></div>
+  <div class="achips">${st(x.status)} ${due(x.due)}</div></div>`;
+ const sec=(t,hint,n,body)=>n?`<h3 style="margin:16px 0 8px">${t} <span class="ct">${n}</span> <span class="small grey" style="font-weight:400">${hint}</span></h3><div class="bgrid">${body}</div>`:"";
+ const running=JOBST&&JOBST.running&&JOBST.claude;
+ const nP=working.length+revs.length+pages.length;
+ let h=`<div class="tabtools"><span class="small">${nP?`${nP} page${nP===1?"":"s"} for Claude`:"No pages for Claude right now ✓"}${running?" · Claude is running now":""}</span>${pages.some(isPending)||revs.length?`<button class="sbtn" onclick="run('start')" ${running?"disabled":""} title="Claude works the queue: revisions first, then new pages">Start the queue</button>`:""}</div>`;
+ h+=sec("Claude is working on these now","",working.length,card("",working,pageRow));
+ h+=sec("Revisions waiting for Claude","QA asked for changes",revs.length,card("",revs,pageRow));
+ h+=sec("Pages not started","new MLPs and city pages",pages.length,card("",pages,pageRow));
+ h+=sec("Blogs not built yet","your turn on monday, no folder in Blogs - also counted on the Blogs tab",blogs.length,card("",blogs,blogRow));
+ if(!nP&&!blogs.length)h+=`<div class="card small">${ql?"Nothing matches the search.":"Claude has started everything assigned to you ✓"}</div>`;
+ if(other.length)h+=`<details class="card" style="margin-top:14px"${ql?" open":""}><summary><b>Other open monday tasks</b> <span class="small">(${other.length}) - Metatags, SEO Review, Mobile Check, Site Live: done on monday, not by Claude</span></summary><div class="bgrid" style="margin-top:8px">${card("",other,otherRow)}</div></details>`;
+ $("#view").innerHTML=h}
+// Work tabs by whose turn (2026-11-23). "Not started" -> "Claude's turn" (it counted 14 blogs that the Blogs tab counts
+// too); City Pages tab -> "City pages only" filter on every list; revision tabs say where QA asked (each row says whose turn).
+const TABS=[["dash","Dashboard",null],["all","All",i=>true],["post","👤 Your turn · post",i=>doneNotPosted(i)],["notstarted","🤖 Claude's turn",claudeTurn],
+ ["review","🔍 With QA",i=>i.status==="Waiting for Review"],["revision","Revisions · Final MLP",isMlpRev],["mobile","Revisions · Mobile",isMobRev],["hold","⏸ On hold",i=>turnOf(i)==="hold"],
  ["approved","Approved",null],["assigned","Assigned",null],["blogs","Blogs",null],["seo","SEO review",null],["qareport","QA report",null],["calendar","Calendar",null],["activity","Activity",null],["settings","Settings",null]];
 async function load(){const r=await fetch("/api/state");D=await r.json();V=D.v;updNotice();usageChip();if(!BLOGS)loadBlogs().then(()=>{if(BLOGS)render()});loadAsg().then(()=>{if(ASG)render()});loadSeo().then(()=>{if(SEO)render()});render();if(openSid)openItem(openSid,true);loadSince()}
 let JOBST=null;
@@ -883,6 +1024,11 @@ let REF_WAIT=0;
 async function refreshNow(){const j=await spost("/api/check-now",{full:true});toast(j.ok?j.msg:j.error,3500);REF_WAIT=Date.now();refBtn();poll()}
 function refBtn(w){const b=$("#bRefresh");if(!b)return;if(w&&w.busy)REF_WAIT=0;const on=(w&&w.busy)||(REF_WAIT&&Date.now()-REF_WAIT<20000);
  b.classList.toggle("busy",!!on);b.disabled=!!on}
+// orange dot on the ⋯ menu when monday or Claude usage needs a look (both live in the menu since 2026-11-23)
+const HALERT={h:false,u:false};
+function moreDot(){const b=$("#bMore");if(!b)return;const on=HALERT.h||HALERT.u;b.classList.toggle("alert",on);
+ b.title=on?(HALERT.h?"monday check needs a look":"Claude usage is high")+" - click to see":"More: monday check, last Claude run, Claude usage, Refresh, theme"}
+document.addEventListener("click",()=>{const m=$("#hmore");if(m)m.classList.remove("open")});
 function showHealth(w){refBtn(w);const e=$("#mhealth");if(!e)return;if(!w){e.innerHTML="";return}
  const upd=w.busy?"checking…":w.last_check?String(w.last_check).slice(11,16):"";
  const lc=w.last_check?new Date(w.last_check.replace(" ","T")):null,age=lc?(Date.now()-lc)/60000:1e9;
@@ -894,6 +1040,7 @@ function showHealth(w){refBtn(w);const e=$("#mhealth");if(!e)return;if(!w){e.inn
   cAge>24?["ok","Connector: last error "+String(c.at).slice(5,16)+", none since (only Claude runs use it)"]:["bad","Connector: failing since "+String(c.at).slice(5,16)+" - "+(c.msg||"")];
  const worst=["bad","warn","off","ok"].find(x=>tok[0]===x||con[0]===x)||"ok";   // one dot (user 2026-11-17: simpler header); hover = details
  e.innerHTML=`<span class="mh"><b>monday</b><i class="${worst}"></i>${worst==="ok"?"OK":worst==="bad"?"needs a look":"…"}${upd?`<span class="mup">· ${upd}</span>`:""}</span>`;
+ HALERT.h=worst==="bad"||worst==="warn";moreDot();
  e.title=($("#meta")?$("#meta").textContent+"\n":"")+tok[1]+"\n"+con[1]+"\n"+($("#watch")?$("#watch").textContent:"")+"\n(token = tracker refresh; connector = Claude jobs)"}
 function showSess(s){SESS=s;showNowNext();const e=$("#sess");if(!e)return;if(!s){e.style.display="none";return}e.style.display="inline-block";
  e.title="Claude (VS Code): "+s.task+" – "+s.step+(s.pos?" "+s.pos:"")+"\nStarted from VS Code, "+String(s.at||"").slice(11,16);
@@ -903,9 +1050,11 @@ function showSess(s){SESS=s;showNowNext();const e=$("#sess");if(!e)return;if(!s)
 function autoBadge(){const e=$("#auto");if(!e)return;const j=JOBST;
  const st=j&&j.running?(j.claude?["CLAUDE WORKING","run"]:["REFRESHING","run"]):["IDLE","idle"];
  e.textContent=st[0];e.className="badge "+st[1];e.title=j&&j.running?"A "+(j.action||"")+" run is going - see the Now line":"Nothing is running. Start works the queue; Start now / Fix it now do one page."}
-function showJob(j){JOBST=j;autoBadge();setTimeout(showNowNext,0);const e=$("#job");if(!j||!j.action){e.style.display="none"}else{e.style.display="inline-block";e.title=j.activity||"";
+function showJob(j){JOBST=j;autoBadge();setTimeout(showNowNext,0);const e=$("#job"),lr=$("#lastrun");
+ if(j&&j.action&&!j.running&&lr)lr.textContent=`Last ${j.action}: ${j.code===0?"finished":"ended"} ${String(j.ended||"").slice(11,16)} (click for the log)`;
+ if(!j||!j.action||!j.running){e.style.display="none"}else{e.style.display="inline-block";e.title=j.activity||"";   // header shows a run only while it runs; the last run is in the ⋯ menu
  if(j.running&&j.claude){e.innerHTML=`<span class="spin"></span>${esc(jobText(j))} (log)`}else
- e.innerHTML=j.running?`<span class="spin"></span>${j.action==="start"?"Working the queue":"Refreshing from monday"}… (log)`:`Last ${j.action}: ${j.code===0?"finished":"ended"} ${String(j.ended||"").slice(11,16)} (log)`}
+ e.innerHTML=`<span class="spin"></span>${j.action==="start"?"Working the queue":"Refreshing from monday"}… (log)`}
  $("#bStart").disabled=!!(j&&j.running&&j.claude);if($("#joblog").style.display==="block")$("#joblog").textContent=logText(j)}
 // Now & Next card on the All tab (user, 2026-11-17: "put a section where it will show what you are working on and whats next").
 // Now = the Start/Fix run (progress.py step chips) and Claude's VS Code task (session_progress.py).
@@ -966,17 +1115,17 @@ Claude Code builds it (brief, content, SEO fix, QA check, Final mobile check, up
 // "New version available" (2026-11-19 #8): a small notice in the header when the shared updates folder has a newer zip
 function updNotice(){const u=D&&D.update;let e=$("#updchip");if(!u){if(e)e.remove();return}
  if(!e){e=document.createElement("button");e.id="updchip";e.className="updchip";e.onclick=async()=>{const j=await (await fetch("/api/open-updates",{method:"POST",body:"{}"})).json();toast(j.ok?j.msg:j.error)};
-  const c=document.querySelector(".ctl");if(!c)return;c.insertBefore(e,$("#bTheme"))}
+  const c=document.querySelector(".ctl");if(!c)return;c.insertBefore(e,$("#hmore"))}
  e.textContent="New version "+u.version;e.title="You have "+u.mine+". Click to open the updates folder, unzip the new version and double-click SETUP - your data is kept."}
 // "Claude usage" chip (2026-11-19, user: "how many percent is claude code before we reach the limit"): the 5-hour and
 // weekly plan limits, from Claude Code's status line (claude_usage_statusline.py). Orange from 70%, red from 90%.
 function usageChip(){const u=D&&D.claude_usage;let e=$("#usechip");
- if(!e){e=document.createElement("span");e.id="usechip";e.className="usechip";const c=document.querySelector(".ctl");if(!c)return;c.insertBefore(e,$("#bTheme"))}
+ if(!e){e=document.createElement("span");e.id="usechip";e.className="usechip";const c=$("#usehere");if(!c)return;c.appendChild(e)}
  if(!u){e.textContent="Claude usage: -";e.className="usechip";e.title="Shows after Claude Code reports its usage once (open a Claude Code chat).";return}
  const pct=w=>w?Math.round(w.used)+"%":"-",hi=Math.max(u.five_hour?u.five_hour.used:0,u.seven_day?u.seven_day.used:0);
  const when=t=>t?new Date(t*1000).toLocaleString([], {weekday:"short",hour:"numeric",minute:"2-digit"}):"-";
  e.textContent=`Claude ${pct(u.five_hour)} · week ${pct(u.seven_day)}`;
- e.className="usechip"+(hi>=90?" red":hi>=70?" amber":"")+(u.age_min>360?" old":"");
+ e.className="usechip"+(hi>=90?" red":hi>=70?" amber":"")+(u.age_min>360?" old":"");HALERT.u=hi>=70;moreDot();
  e.title=`Claude Code plan usage (same numbers as /usage)\n5-hour limit: ${pct(u.five_hour)} used - resets ${when(u.five_hour&&u.five_hour.resets_at)}\nWeekly limit: ${pct(u.seven_day)} used - resets ${when(u.seven_day&&u.seven_day.resets_at)}\nUpdated ${u.age_min<1?"just now":u.age_min+" min ago"} (updates while a Claude Code session is open)`}
 function usageOk(what){const u=D&&D.claude_usage;const f=u&&u.five_hour&&u.five_hour.used,w=u&&u.seven_day&&u.seven_day.used;   // asks before a long run near the limit
  if((f||0)<90&&(w||0)<90)return true;
@@ -1013,6 +1162,7 @@ function postCard(i,ns,post){const m=ns.match(/Upload (\d+) images?/),n=m?+m[1]:
   +(pk&&pk.note?((pk.notes||[]).length?pk.notes:[""]).map(n=>`<button class="cpb note" onclick="event.stopPropagation();copyPack(${sid},'@note${n?":"+n:""}',this)" title="Copy the monday update${n?" for the "+n+" subitem":""}${pk.ba?" - attach the "+pk.ba+" before/after images from 4-before-after":""}">Copy note${n?" · "+(n==="Final Mobile Check"?"Mobile":n):""}</button>`).join(""):"");
  // 2026-11-19 #3: one line + one fold (copy buttons, Preview, Upload pack, meta / note) - rows were ~200px tall
  return `<div class="pc pcc" title="${esc(ns)}"><div class="pc-top"><div class="pc-s">${head}${postOn(i)?` <span class="pc-on2">· on ${esc(postOn(i))}</span>`:""}</div>${post}</div>
+ <div class="pc-mon" title="Mark as posted only marks it in the tracker. The tracker reads monday but never changes it.">↳ then set monday to <b>Waiting for Review</b> yourself</div>
  <details class="pcx" onclick="event.stopPropagation()"><summary>Copy · Preview · Upload pack</summary><div class="cps">${copies}<button class="ghost" onclick="event.stopPropagation();openF(${sid},'preview')" title="Open the page (preview.html) in your browser">Preview</button><button class="ghost" onclick="event.stopPropagation();openF(${sid},'topost')" title="Open the upload pack folder (images + files)">Upload pack</button></div>
  ${more?`<div class="cps">${more}</div>`:""}</details></div>`}
 async function copyPack(sid,name,btn){
@@ -1105,7 +1255,7 @@ function render(){
  const cnt=k=>{const t=TABS.find(x=>x[0]===k);return t&&t[2]?items.filter(t[2]).length:0};
  if(!TSEEN){TSEEN={};try{TSEEN=JSON.parse(localStorage.tseen||"null")}catch(e){}if(!TSEEN){TSEEN={};FOLD.forEach(k=>TSEEN[k]=cnt(k));saveSeen()}}
  const isNew=k=>FOLD.includes(k)&&cnt(k)>(TSEEN[k]||0)&&tab!==k;
- const tb=([k,l,f])=>{const n=f?items.filter(f).length:(k==="approved"?(st.approved||[]).length:"");return `<button class="${tab===k?"on":""}${n===0&&tab!==k?" zero":""}${isNew(k)?" tnew":""}" title="${n===0?"Nothing here right now - it fills by itself from monday":isNew(k)?"New since you last looked":""}" onclick="go('${k}')">${l}${n!==""?`<span class="ct">${n}</span>`:""}${isNew(k)?'<span class="newtag">NEW</span>':""}</button>`};
+ const tb=([k,l,f])=>{const n=k==="notstarted"?nsCount():f?items.filter(f).length:(k==="approved"?(st.approved||[]).length:"");return `<button class="${tab===k?"on":""}${n===0&&tab!==k?" zero":""}${isNew(k)?" tnew":""}" title="${n===0?"Nothing here right now - it fills by itself from monday":isNew(k)?"New since you last looked":""}" onclick="go('${k}')">${l}${n!==""?`<span class="ct">${n}</span>`:""}${isNew(k)?'<span class="newtag">NEW</span>':""}</button>`};
  FOLD.forEach(k=>{if(!cnt(k)&&TSEEN[k]){TSEEN[k]=0;saveSeen()}});
  const empty=FOLD.filter(k=>!cnt(k)&&tab!==k),names=empty.map(k=>TABS.find(x=>x[0]===k)[1]);
  const shown=TABS.filter(t=>t[0]!=="dash"&&!side.includes(t[0])&&(SHOWEMPTY||!empty.includes(t[0])));
@@ -1116,10 +1266,12 @@ function render(){
  $("#tabs").innerHTML=`<input placeholder="Search dealer, MLP, notes..." value="${esc(q)}" oninput="searchIn(this)">`+'<div class="tabbar">'+dashB+grp("Work")+shown.map(tb).join("")+note+'</div><div class="side">'+grp("Views")+sb(["assigned","approved","blogs","seo"])+grp("Reports")+sb(["qareport","calendar","activity"])+'<span class="ngap"></span>'+sb(["settings"])+'</div>';
  if(tab!=="settings"||!$("#settings"))renderView();   // never redraw the Settings form under your typing
 }
-function go(k){if(tab==="settings"&&k!=="settings"&&SDIRTY&&!confirm("You have unsaved settings. Leave without saving?"))return;tab=k;SDIRTY=false;
+function go(k){if(tab==="settings"&&k!=="settings"&&SDIRTY&&!confirm("You have unsaved settings. Leave without saving?"))return;
+ if(k==="city"){CITY=true;k="all"}   // old City Pages links -> All with the city filter on
+ if(!TABS.some(t=>t[0]===k))k="dash";tab=k;SDIRTY=false;
  if(FOLD.includes(k)&&D){const t=TABS.find(x=>x[0]===k);TSEEN[k]=((D.state||{}).items||[]).filter(t[2]).length;saveSeen()}render()}
 // tabs that hide when empty (Ready to post, Final MLP revision, Mobile revision); TSEEN = count when you last opened each
-const FOLD=["post","revision","mobile"];let TSEEN=null,SHOWEMPTY=false;
+const FOLD=["post","revision","mobile","hold"];let TSEEN=null,SHOWEMPTY=false;
 function saveSeen(){try{localStorage.tseen=JSON.stringify(TSEEN)}catch(e){}}
 function renderView(){
  const st=D.state||{};showNowNext();
@@ -1132,17 +1284,20 @@ function renderView(){
  if(tab==="assigned")return assignedView();
  if(tab==="blogs")return blogsView();
  if(tab==="seo")return seoView();
+ if(tab==="notstarted")return notStartedView();
  const f=TABS.find(t=>t[0]===tab)[2],ql=q.toLowerCase();
- let rows=(st.items||[]).filter(f).filter(i=>!ql||JSON.stringify([i.dealer,i.mlp,i.notes,i.cnotes,i.next_step]).toLowerCase().includes(ql));
+ const inTab=(st.items||[]).filter(f),nCity=inTab.filter(i=>i.type==="City Page").length;
+ let rows=inTab.filter(i=>!CITY||i.type==="City Page").filter(i=>!ql||JSON.stringify([i.dealer,i.mlp,i.notes,i.cnotes,i.next_step]).toLowerCase().includes(ql));
  rows.sort((a,b)=>a.dealer.localeCompare(b.dealer)||String(a.due||"9").localeCompare(String(b.due||"9"))||a.mlp.localeCompare(b.mlp));
- let h=(tab==="all"&&!ql?sinceBox():"")+statusKey()
-  +`<table class="list"><tr><th>MLP / page</th><th>monday</th><th>Claude</th><th>Your next step</th><th>Due</th><th>Claude's notes</th></tr>`;
+ const cityBtn=nCity&&nCity<inTab.length||CITY?`<div class="tabtools"><button class="cityf${CITY?" on":""}" onclick="CITY=!CITY;renderView()" title="Show only city pages (was the City Pages tab)">${CITY?"✓ ":""}City pages only <span class="ct">${nCity}</span></button></div>`:"";
+ let h=(tab==="all"&&!ql?sinceBox():"")+statusKey()+cityBtn
+  +`<table class="list"><tr><th>MLP / page</th><th>Whose turn</th><th>Your next step</th><th>Due</th><th>Claude's notes</th></tr>`;
  for(const sg of STAGES){
   const part=rows.filter(i=>stageOf(i)===sg.k);if(!part.length)continue;
   if(sg.k.startsWith("post")){const dmin={};part.forEach(i=>{const d=String(i.due||"9999");if(!(i.dealer in dmin)||d<dmin[i.dealer])dmin[i.dealer]=d});   // soonest due first (2026-11-16)
    part.sort((a,b)=>dmin[a.dealer].localeCompare(dmin[b.dealer])||a.dealer.localeCompare(b.dealer)||String(a.due||"9").localeCompare(String(b.due||"9"))||a.mlp.localeCompare(b.mlp))}
-  const shut=STG_SHUT[sg.k]===undefined?sg.shut:STG_SHUT[sg.k];
-  h+=`<tr class="stage s-${sg.k}"><td colspan="6" onclick="toggleStage('${sg.k}',${!shut})"><span class="sarr">${shut?"▸":"▾"}</span><b>${sg.t}</b><span class="scnt">${part.length}</span><span class="shint">${sg.h}</span></td></tr>`;
+  const shut=STG_SHUT[sg.k]===undefined?(tab==="all"&&sg.shut):STG_SHUT[sg.k];   // own tab (e.g. On hold) opens unfolded
+  h+=`<tr class="stage s-${sg.k}"><td colspan="5" onclick="toggleStage('${sg.k}',${!shut})"><span class="sarr">${shut?"▸":"▾"}</span><b>${sg.t}</b><span class="scnt">${part.length}</span><span class="shint">${sg.h}</span></td></tr>`;
   if(shut)continue;
   let last=null,gshut=false;
   for(const i of part){
@@ -1150,22 +1305,22 @@ function renderView(){
     last=i.dealer;gshut=false;h+=withDealer(sg.compact?rowCompact(i):rowFull(i),i);continue}
    if(i.dealer!==last){const g=part.filter(r=>r.dealer===i.dealer),n=g.length;
     // big batches (e.g. 11 city pages) start folded in the ready sections so the list stays short
-    const gk=sg.k+"|"+i.dealer;gshut=sg.k.startsWith("post")&&n>4&&(GRP_OPEN[gk]===undefined?true:!GRP_OPEN[gk]);h+=`<tr class="dealer"><td colspan="6"><span class="dlink" onclick="openDealer(${esc(JSON.stringify(i.dealer))})" title="Dealer card: fonts, links, colours, pages">${esc(i.dealer)}</span>${ccBtn({dealer:i.dealer})}<span class="cnt">${n} page${n>1?"s":""}</span>${batchBtns(i.dealer)}${sg.k.startsWith("post")&&n>4?`<button class="grp-tg" onclick="toggleGrp(${esc(JSON.stringify(gk))},${gshut})">${gshut?"Show "+n+" pages ▸":"Fold ▾"}</button>`:""}</td></tr>`;last=i.dealer}
+    const gk=sg.k+"|"+i.dealer;gshut=sg.k.startsWith("post")&&n>4&&(GRP_OPEN[gk]===undefined?true:!GRP_OPEN[gk]);h+=`<tr class="dealer"><td colspan="5"><span class="dlink" onclick="openDealer(${esc(JSON.stringify(i.dealer))})" title="Dealer card: fonts, links, colours, pages">${esc(i.dealer)}</span>${ccBtn({dealer:i.dealer})}${dlinks(i.dealer)}<span class="cnt">${n} page${n>1?"s":""}</span>${batchBtns(i.dealer)}${sg.k.startsWith("post")&&n>4?`<button class="grp-tg" onclick="toggleGrp(${esc(JSON.stringify(gk))},${gshut})">${gshut?"Show "+n+" pages ▸":"Fold ▾"}</button>`:""}</td></tr>`;last=i.dealer}
    if(gshut)continue;
    h+=sg.compact?rowCompact(i):rowFull(i);
   }
  }
- if(!rows.length)h+=`<tr><td colspan="6" class="empty">Nothing here right now.</td></tr>`;
+ if(!rows.length)h+=`<tr><td colspan="5" class="empty">Nothing here right now.</td></tr>`;
  $("#view").innerHTML=h+"</table>";
 }
 const STAGES=[
- {k:"postrev",t:"Ready to post · revisions",h:"QA is waiting - post these first"},
- {k:"post",t:"Ready to post · new pages",h:"upload, paste in the CMS, then Waiting for Review on monday"},
- {k:"claude",t:"Claude is working on it",h:"QA revisions Claude is fixing or will fix next"},
- {k:"you",t:"Needs you",h:"something only you can give (a link, images, an answer)"},
- {k:"todo",t:"Not started yet",h:"assigned on monday, in Claude's queue"},
- {k:"qa",t:"With QA",h:"Waiting for Review on monday - nothing to do",compact:true},
- {k:"hold",t:"On hold / other",h:"",compact:true,shut:true}];
+ {k:"postrev",t:"👤 Your turn · post fixed revisions",h:"Claude fixed them, QA is waiting - post these first"},
+ {k:"post",t:"👤 Your turn · post new pages",h:"upload, paste in the CMS, then Waiting for Review on monday"},
+ {k:"claude",t:"🤖 Claude's turn · QA revisions",h:"Claude is fixing these or fixes them next on Start"},
+ {k:"you",t:"👤 Your turn · needs you",h:"something only you can give (a link, images, an answer)"},
+ {k:"todo",t:"🤖 Claude's turn · not started",h:"assigned on monday, in Claude's queue"},
+ {k:"qa",t:"🔍 With QA",h:"Waiting for Review on monday - nothing to do",compact:true},
+ {k:"hold",t:"⏸ On hold / other",h:"",compact:true,shut:true}];
 // New page vs revision (user, 2026-11-16: "make it easy to see the MLPs that is new and can be posted as well as the
 // revisioned project that is ready to be posted ... make sure that it is not overwhelming")
 function revNo(i){   // revision number of the round Claude just finished, 0 = new page
@@ -1189,6 +1344,9 @@ let STG_SHUT={};try{STG_SHUT=JSON.parse(localStorage.getItem("stg_shut")||"{}")}
 function toggleStage(k,shut){STG_SHUT[k]=shut;try{localStorage.setItem("stg_shut",JSON.stringify(STG_SHUT))}catch(e){}renderView()}
 function dueHtml(i){const dl=i.days_left,dc=overdueUs(i)?"late":dl<0?"wait":dl!=null&&dl<=1?"soon":"";
  return i.due?`<b style="font-weight:600">${fmtDate(i.due)}</b><br>${dl==null?"":`<span class="due ${dc}">${dl<0?Math.abs(dl)+" day"+(dl===-1?"":"s")+" late":dl===0?"today":dl===1?"tomorrow":dl+" days left"}</span>`}`:""}
+function turnCell(i,compact){   // whose turn + (small) where QA asked / Final MLP approved; monday + Claude status on hover
+ const rl=turnOf(i)==="claude"?revChips(i):"";   // fixed revisions: "Your next step" already says where to post
+ return `<td data-label="Whose turn" onclick="event.stopPropagation()">${turnChip(i)}${!compact?qaBadge(i):""}${rl?`<div class="tsub">${rl}</div>`:""}${i.mobile_only?'<div class="small grey" style="margin-top:3px" title="The Final MLP is approved on monday; the page stays here until the Final Mobile Check is approved">Final MLP approved</div>':""}</td>`}
 function mondayCell(i){   // monday status, read-only (tracker override removed - user, 2026-11-16)
  const rl=revChips(i);
  return `<td data-label="monday" onclick="event.stopPropagation()">${rl&&i.status==="Needs Revision"?rl:`<span class="mst" style="--mc:${MC[i.status]||"#999"}" title="From monday - changes when you change it on monday">${esc(i.status)}</span>${rl?" "+rl:""}`}${i.mobile_only?'<div class="small grey" style="margin-top:3px" title="The Final MLP is approved on monday; the page stays here until the Final Mobile Check is approved">Final MLP approved</div>':""}</td>`}
@@ -1201,20 +1359,19 @@ function rowFull(i){
    :isPosted(i)&&NOT_POSTED.includes(i.status)?`<span class="posted">Posted ${esc(String(i.posted).slice(5,16))}</span>`
    :ns.startsWith("Nothing - with QA")?'<span class="tag-qa">With QA</span>':`<span class="done-step">${esc(ns)}</span>${post}`;
   return `<tr class="row" onclick="openItem(${i.subitem_id})"><td data-label="Page"><b>${esc(i.mlp)}</b>${ccBtn(i.subitem_id)}${i.type==="City Page"?'<span class="type">CITY</span>':""}${readyTag(i)}${i.notes?`<span class="nicon" title="Your note: ${esc(i.notes)}">${ICON.note}</span>`:""}</td>
-   ${mondayCell(i)}
-   <td data-label="Claude"><span class="chip c-soft" style="background:${CC[i.claude]||"#eee"}">${esc(i.claude)}</span>${qaBadge(i)}</td>
+   ${turnCell(i)}
    <td data-label="Your next step" class="step">${step}${startBtn(i)}</td>
    <td data-label="Due">${dueHtml(i)}</td>
    ${notesCell(i)}</tr>`}
-function withDealer(row,i){return row.replace('<td data-label="Page">',`<td data-label="Page"><span class="dsub dlink" onclick="event.stopPropagation();openDealer(${esc(JSON.stringify(i.dealer))})" title="Dealer card: fonts, links, colours, pages">${esc(i.dealer)}</span>`)}
+function withDealer(row,i){return row.replace('<td data-label="Page">',`<td data-label="Page"><span class="dline"><span class="dsub dlink" onclick="event.stopPropagation();openDealer(${esc(JSON.stringify(i.dealer))})" title="Dealer card: fonts, links, colours, pages">${esc(i.dealer)}</span>${dlinks(i.dealer)}</span>`)}
 function rowCompact(i){
   return `<tr class="row compact" onclick="openItem(${i.subitem_id})"><td data-label="Page"><b>${esc(i.mlp)}</b>${ccBtn(i.subitem_id)}${i.type==="City Page"?'<span class="type">CITY</span>':""}${i.notes?`<span class="nicon" title="Your note: ${esc(i.notes)}">${ICON.note}</span>`:""}</td>
-   ${mondayCell(i)}<td data-label="Claude" class="small">${esc(i.claude)}</td><td></td>
+   ${turnCell(i,true)}<td></td>
    <td data-label="Due" class="small">${i.due?fmtDate(i.due):""}</td>${notesCell(i)}</tr>`}
 function approvedView(ap){
  const ql=q.toLowerCase();ap=ap.filter(a=>!ql||(a.dealer+" "+a.mlp).toLowerCase().includes(ql)).sort((a,b)=>a.dealer.localeCompare(b.dealer)||a.mlp.localeCompare(b.mlp));
  let h=`<table><tr><th>MLP / page</th><th>Assigned</th><th>Due</th><th>Approved</th><th>Live page</th><th>monday</th></tr>`,last=null;
- for(const a of ap){if(a.dealer!==last){h+=`<tr class="dealer"><td colspan="6"><span class="dlink" onclick="openDealer(${esc(JSON.stringify(a.dealer))})">${esc(a.dealer)}</span></td></tr>`;last=a.dealer}
+ for(const a of ap){if(a.dealer!==last){h+=`<tr class="dealer"><td colspan="6"><span class="dlink" onclick="openDealer(${esc(JSON.stringify(a.dealer))})">${esc(a.dealer)}</span>${dlinks(a.dealer)}</td></tr>`;last=a.dealer}
   h+=`<tr><td><b>${esc(a.mlp)}</b>${a.type==="City Page"?'<span class="type">CITY</span>':""}</td><td>${fmtDate(a.assigned)}</td><td>${fmtDate(a.due)}</td>
    <td>${a.approved_before_tracking?'<span class="grey">before Nov 13</span>':fmtDate(a.first_seen_approved)}</td>
    <td>${a.live_url?`<a href="${esc(a.live_url)}" target="_blank">${esc(a.live_url.replace(/^https?:\/\/(www\.)?/,""))}</a>`:""}</td>
@@ -1289,7 +1446,7 @@ function notesHtml(t){t=String(t||"").trim();if(!t)return'<div class="small">-</
  return parts.slice(0,2).map(one).join("")+(parts.length>2?`<details class="nold"><summary>Older notes (${parts.length-2})</summary>${parts.slice(2).map(one).join("")}</details>`:"")}
 async function openItem(sid,keep){
  openSid=sid;const r=await fetch("/api/item?sid="+sid);const d=await r.json();if(d.error)return;const i=d.item;
- let h=`<div class="hd"><button class="x" onclick="closeItem()">&times;</button><h2>${esc(i.mlp)}${i.type==="City Page"?" (city page)":""}</h2><div class="small" style="color:#fff"><span class="dlink" style="border-color:#fff8" onclick="openDealer(${esc(JSON.stringify(i.dealer))})">${esc(i.dealer)}</span> · ${esc(i.platform||"")}</div>
+ let h=`<div class="hd"><button class="x" onclick="closeItem()">&times;</button><h2>${esc(i.mlp)}${i.type==="City Page"?" (city page)":""}</h2><div class="small" style="color:#fff"><span class="dlink" style="border-color:#fff8" onclick="openDealer(${esc(JSON.stringify(i.dealer))})">${esc(i.dealer)}</span> · ${esc(i.platform||"")}${dlinks(i.dealer)}</div>
   <div class="btns">${revChips(i)&&i.status==="Needs Revision"?revChips(i):`<span class="chip" style="background:${MC[i.status]||"#999"}">${esc(i.status)}</span>${revChips(i)}`}<span class="chip c-soft" style="background:${CC[i.claude]||"#eee"}">${esc(i.claude)}</span>
 </div>${(()=>{   // 2026-11-19 #6: one main action, everything else as a row of small links
    const fix=i.claude==="Revision needed"||i.status==="Needs Revision"&&i.claude!=="Claude is done";
@@ -1339,7 +1496,8 @@ const HOWTO=[
 <li><b>Last days chart</b> - per day: pages Claude built or fixed, QA revision comments, and pages approved. Point at a day for its numbers.</li>
 <li><b>Where the pages are</b> and <b>Dealers with open work</b> - click a bar to open the list or the dealer card.</li>
 <li><b>Due next</b> - the next pages by due date; click one to open it. <b>QA this week</b> and <b>Claude this week</b> sit beside it.</li>
-<li><b>Open the work list</b> takes you to <i>All</i>. Typing in the search box also jumps there.</li></ul>
+<li><b>Open the work list</b> takes you to <i>All</i>. Typing in the search box also jumps there.</li>
+<li><b>Not started</b> (under Work) - everything Claude has not started yet: revisions QA sent back, new pages (also ones with no monday status), and blogs that are your turn but have no folder yet. <i>Start now</i> on a page, or <i>Start the queue</i>. Other open monday tasks Claude does not do (Metatags, SEO Review...) are folded at the bottom.</li></ul>
 <p>On a wide screen the tabs sit in a menu on the left: <i>Work</i> (the page lists), <i>Views</i>, <i>Reports</i> and <i>Settings</i> at the bottom. On a smaller screen they are in one row at the top, as before.</p>`],
 ["The list: stages and colours",`<p>Pages are grouped by what has to happen next:</p><ul>
 <li><b>Ready to post</b> - Claude is done; you upload and post.</li>
@@ -1367,6 +1525,7 @@ const HOWTO=[
 <li>Every QA point also becomes a rule, so the same mistake isn't repeated on the next page.</li></ul>`],
 ["The page panel (click any page)",`<ul>
 <li>At the top: the monday and Claude status, <b>one main button</b> (what to do next) and small links (Preview, Open folder, Upload pack, Claude Code, VS Code, Live page, monday).</li>
+<li><b>CMS</b> and <b>Credentials</b> (next to the dealer name here, on every dealer row and in the dealer card): <i>CMS</i> opens the dealer's backend, <i>Credentials</i> opens the dealer on monday's <i>Dealer Login and Setup</i> board, where the username and password are. Logins are not stored in the tracker. No button = the dealer is not on that board.</li>
 <li><b>Your notes</b> - only you write here; Claude never touches it.</li>
 <li><b>Claude's notes</b> - newest first. <b style="color:#B54708">Decided:</b> = a choice Claude made by the QA rules; <b style="color:#027A48">Revision done</b> = what changed; <b style="color:#B42318">BLOCKER</b> = Claude needs something from you. Older notes are folded.</li></ul>`],
 ["The header: what the chips mean",`<ul>
@@ -1384,7 +1543,8 @@ const HOWTO=[
 <li><b>Calendar</b> - due dates. <b>Activity</b> - everything that happened, and the shift summary. <b>Settings</b> - this page.</li></ul>
 <p><b>Search</b> (magnifier) finds a dealer, page or note.</p>`],
 ["Auto-update and pop-ups",`<ul>
-<li>During your shift the tracker checks monday every few minutes by itself. New pages assigned to you appear within minutes.</li>
+<li>During your shift the tracker checks monday every few minutes by itself. New pages assigned to you appear within minutes. Outside your shift it still checks every 30 minutes (while the PC is on), so pages assigned in the morning are already there when you start.</li>
+<li>While Claude is running, new assignments still give a pop-up right away; they show in the list as soon as the run ends.</li>
 <li>An amber line "<i>N assigned tasks on monday the tracker couldn't place</i>" means monday gave you something the tracker doesn't treat as a page. Open it and check; <i>Got it</i> hides it.</li>
 <li>Several city pages under one monday item (e.g. 6 cities)? Press <b>Build N as a batch</b> on the dealer row: Claude builds the first one as a sample. Check it, then press <b>Copy sample to the other N</b> - Claude makes the rest from it with their own content docs. If one of them is already built, the dealer row offers <b>Copy &lt;that page&gt; to the other N</b> straight away.</li>
 <li>Tracker looks behind monday? Press <b>Refresh</b> (top right). It re-reads everything from monday right away, any time of day (about a minute; the arrow spins while it works).</li>
@@ -1557,14 +1717,14 @@ async function openClaude(t){
 // ---------------------------------------------------------------- theme (auto / light / dark), remembered in this browser
 function applyTheme(){let t="auto";try{t=localStorage.getItem("mlpTheme")||"auto"}catch(e){}
  const dark=t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=dark?"dark":"light";
- const b=$("#bTheme");if(b){b.textContent=t==="auto"?"◐ Auto":t==="dark"?"☾ Dark":"☀ Light";b.title="Theme: "+t+" (click to change)"}}
+ const b=$("#bTheme");if(b){b.textContent=t==="auto"?"◐ Theme: Auto":t==="dark"?"☾ Theme: Dark":"☀ Theme: Light";b.title="Theme: "+t+" (click to change)"}}
 function cycleTheme(){let t="auto";try{t=localStorage.getItem("mlpTheme")||"auto"}catch(e){}t=t==="auto"?"dark":t==="dark"?"light":"auto";try{localStorage.setItem("mlpTheme",t)}catch(e){}applyTheme()}
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme);
 // ---------------------------------------------------------------- dealer card
 async function openDealer(name){openSid=null;const d=await (await fetch("/api/dealer?name="+encodeURIComponent(name))).json();
  const link=(u,t)=>u?`<a href="${esc(u)}" target="_blank">${esc(t||u)}</a>`:"-";
  let h=`<div class="hd"><button class="x" onclick="closeItem()">&times;</button><h2>${esc(d.dealer)}</h2><div class="small" style="color:#fff;opacity:.8">${esc(d.platform||"platform unknown")}</div>
-  <div class="btns"><button class="btn" onclick="openClaude({dealer:${esc(JSON.stringify(d.dealer))}})" title="VS Code opens the dealer folder with a Claude Code chat - its pages are typed in">Open in Claude Code</button>${d.folder?`<button class="btn" onclick="vsc(${esc(JSON.stringify(d.dealer))},'MLP')">MLP folder in VS Code</button>`:""}${d.city_folder?`<button class="btn" onclick="vsc(${esc(JSON.stringify(d.dealer))},'City Page')">City pages in VS Code</button>`:""}</div></div><div class="bd">`;
+  <div class="btns">${d.cms_url?`<a class="btn" href="${esc(d.cms_url)}" target="_blank" rel="noopener" title="The dealer's CMS (backend)">Open CMS</a>`:""}${d.cred_url?`<a class="btn" href="${esc(d.cred_url)}" target="_blank" rel="noopener" title="monday Dealer Login and Setup - the username and password are there">Credentials</a>`:""}<button class="btn" onclick="openClaude({dealer:${esc(JSON.stringify(d.dealer))}})" title="VS Code opens the dealer folder with a Claude Code chat - its pages are typed in">Open in Claude Code</button>${d.folder?`<button class="btn" onclick="vsc(${esc(JSON.stringify(d.dealer))},'MLP')">MLP folder in VS Code</button>`:""}${d.city_folder?`<button class="btn" onclick="vsc(${esc(JSON.stringify(d.dealer))},'City Page')">City pages in VS Code</button>`:""}</div></div><div class="bd">`;
  h+=`<section><h3>Brand</h3><div class="kv"><b>Fonts</b><div>${d.fonts.length?d.fonts.map(esc).join(", "):"-"}</div>
   <b>Colours</b><div>${d.colours.length?d.colours.map(c=>`<span class="sw"><i style="background:${esc(c)}"></i>${esc(c)}</span>`).join(""):"-"}</div>
   <b>Image URL pattern</b><div>${d.cdn?`${esc(d.cdn)}<button class="cpy" onclick="cp(${esc(JSON.stringify(d.cdn))})">Copy</button>`:"-"}</div>
@@ -1812,7 +1972,7 @@ function dashView(){
  const st=D.state||{},items=st.items||[],ap=st.approved||[],hist=D.history||[];
  const now=new Date(),wk=ymd(weekStart());
  const cnt=k=>items.filter(i=>stageOf(i)===k).length;
- const ready=cnt("post")+cnt("postrev"),fixing=cnt("claude"),withQa=cnt("qa"),late=items.filter(overdueUs);
+ const ready=cnt("post")+cnt("postrev"),fixing=items.filter(claudeTurn).length,withQa=cnt("qa"),late=items.filter(overdueUs);
  const due7=items.filter(i=>i.days_left!=null&&i.days_left>=0&&i.days_left<=7&&!WAITING.includes(i.status)).length;
  const apDay0=ap.reduce((m,a)=>a.first_seen_approved&&a.first_seen_approved<m?a.first_seen_approved:m,"9999");   // first tracker day = old approvals imported
  const apReal=a=>a.first_seen_approved&&a.first_seen_approved!==apDay0&&String(a.approved_before_tracking)!=="True";
@@ -1823,10 +1983,11 @@ function dashView(){
  const tile=(n,l,sub,go_,tone)=>`<button class="dk${tone?" "+tone:""}" onclick="${go_}"><span class="dkn">${n}</span><span class="dkl">${l}</span><span class="dks">${sub}</span></button>`;
  let h=`<div class="dash"><div class="dhead"><div><h2>${hi}${first?", "+esc(first):""}</h2><div class="small">${now.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})} · monday read ${esc(String(st.refreshed_at||"-").slice(11,16))}</div></div>
   <button class="dgo" onclick="go('all')">Open the work list →</button></div>
+ ${doNext(items)}
  <div class="dkpis">
-  ${tile(ready,"Ready to post",ready?"upload, paste, mark posted":"nothing waiting ✓","go('post')",ready?"good":"")}
-  ${tile(fixing,"Revisions open",fixing?"Claude fixes these first":"none right now ✓","go('all')",fixing?"warn":"")}
-  ${tile(withQa,"With QA","Waiting for Review","go('review')","")}
+  ${tile(ready,"👤 Your turn · post",ready?`${cnt("postrev")} fixed revision${cnt("postrev")===1?"":"s"} · ${cnt("post")} new`:"nothing waiting ✓","go('post')",ready?"good":"")}
+  ${tile(fixing,"🤖 Claude's turn",fixing?"Claude does these on Start":"nothing for Claude ✓","go('notstarted')",fixing?"warn":"")}
+  ${tile(withQa,"🔍 With QA","Waiting for Review - nothing to do","go('review')","")}
   ${tile(late.length?late.length:due7,late.length?"Overdue":"Due in 7 days",late.length?"past the due date":"still on our side","go('calendar')",late.length?"bad":"")}
   ${tile(apWeek,"Approved this week",ap.length+" approved in all","go('approved')","")}
  </div>`;
@@ -1840,10 +2001,11 @@ function dashView(){
   if(/^Claude finished (building|revision)/.test(e))by[d].built++;else if(/^Revision requested on monday/.test(e))by[d].rev++});
  ap.forEach(a=>{if(apReal(a)&&by[a.first_seen_approved])by[a.first_seen_approved].appr++});
  const tot=S.map(s=>days.reduce((n,d)=>n+by[d][s.k],0));
- h+=`<div class="dgrid"><section class="dcard wide"><div class="dch"><h3>Last ${days.length} days</h3><div class="dleg">${S.map((s,x)=>`<span><i style="background:${s.c}"></i>${s.l} <b>${tot[x]}</b></span>`).join("")}</div></div>${dashChart(days,by,S)}</section>`;
+ // chart moved below "Due next" (2026-11-23: what to do first stays on top)
+ let chartH=`<div class="dgrid"><section class="dcard wide"><div class="dch"><h3>Last ${days.length} days</h3><div class="dleg">${S.map((s,x)=>`<span><i style="background:${s.c}"></i>${s.l} <b>${tot[x]}</b></span>`).join("")}</div></div>${dashChart(days,by,S)}</section>`;
  // ---- where pages are (one hue, magnitude)
  const sg=STAGES.map(s=>({...s,n:cnt(s.k)})).filter(s=>s.n),mx=Math.max(1,...sg.map(s=>s.n));
- h+=`<section class="dcard"><div class="dch"><h3>Where the ${items.length} pages are</h3></div><div class="dbars">${sg.map(s=>`<button class="dbar" onclick="go('all')" title="${esc(s.h||s.t)}"><span class="dbl">${esc(s.t)}</span><span class="dbt"><i style="width:${Math.max(4,s.n/mx*100)}%"></i></span><b>${s.n}</b></button>`).join("")||'<div class="small">No pages on the tracker right now.</div>'}</div></section></div>`;
+ chartH+=`<section class="dcard"><div class="dch"><h3>Where the ${items.length} pages are</h3></div><div class="dbars">${sg.map(s=>`<button class="dbar" onclick="go('all')" title="${esc(s.h||s.t)}"><span class="dbl">${esc(s.t)}</span><span class="dbt"><i style="width:${Math.max(4,s.n/mx*100)}%"></i></span><b>${s.n}</b></button>`).join("")||'<div class="small">No pages on the tracker right now.</div>'}</div></section></div>`;
  // ---- due next / busiest dealers / QA / Claude
  const dueList=items.filter(i=>i.due&&!WAITING.includes(i.status)).sort((a,b)=>String(a.due).localeCompare(String(b.due))).slice(0,7);
  const dueChip=i=>i.days_left==null?"":i.days_left<0?`<span class="due late">${-i.days_left}d late</span>`:i.days_left===0?`<span class="due soon">today</span>`:i.days_left<=2?`<span class="due soon">${i.days_left}d</span>`:`<span class="due">${i.days_left}d</span>`;
@@ -1861,7 +2023,21 @@ function dashView(){
  const cu=D.claude_usage||{},runs=((DX.costs||{}).runs||[]).filter(r=>String(r.started||"")>=wk),mins=Math.round(runs.reduce((n,r)=>n+(+r.minutes||0),0));
  const wkUse=cu.seven_day&&cu.seven_day.used!=null?Math.round(cu.seven_day.used):null;
  side+=`<div class="dsub"><h3>Claude this week</h3><div class="small">${runs.length} run${runs.length===1?"":"s"} · ${mins} min${wkUse!=null?` · weekly limit used ${wkUse}%`:""}</div>${wkUse!=null?`<div class="dbt big" title="Weekly Claude usage"><i style="width:${Math.min(100,wkUse)}%"></i></div>`:""}</div></section></div></div>`;
- h+=side;$("#view").innerHTML=h}
+ h+=side.replace(/<\/div>$/,"")+chartH+"</div>";$("#view").innerHTML=h}
+// "Do this next" (2026-11-23): your 3 most urgent actions, in plain words; late first, then fixed revisions, then new pages
+function doNext(items){
+ const byDue=(a,b)=>(a.days_left??999)-(b.days_left??999)||String(a.dealer).localeCompare(b.dealer);
+ const late=d=>d==null?"":d<0?`<span class="due late">${-d}d late</span>`:d===0?`<span class="due soon">today</span>`:d===1?`<span class="due soon">tomorrow</span>`:"";
+ const act=i=>doneNotPosted(i)?`Post ${revNo(i)?"the revision for ":""}<b>${esc(i.mlp)}</b> on monday (${esc(postOn(i))})`
+  :needsYou(i)?`<b>${esc(i.mlp)}</b>: ${esc(i.next_step)}`:isPosted(i)?`Set <b>${esc(i.mlp)}</b> to Waiting for Review on monday`:`Check <b>${esc(i.mlp)}</b>`;
+ const mine=items.filter(i=>turnOf(i)==="you");
+ const order=[...mine.filter(overdueUs).sort(byDue),...mine.filter(i=>stageOf(i)==="postrev").sort(byDue),...mine.filter(needsYou).sort(byDue),...mine.sort(byDue)];
+ const pick=[...new Set(order)].slice(0,3);
+ const nC=items.filter(i=>i.claude==="Revision needed"||isPending(i)).length,running=JOBST&&JOBST.running&&JOBST.claude;   // what Start would really do
+ let li=pick.map(i=>`<li onclick="openItem(${+i.subitem_id})"><span class="ti">👤</span><span class="dn2"><span>${act(i)}</span><span>${esc(i.dealer)}</span></span>${late(i.days_left)}</li>`).join("");
+ if(nC&&!running)li+=`<li onclick="go('notstarted')"><span class="ti">🤖</span><span class="dn2"><span>Press <b>Start</b> - Claude has ${nC} page${nC===1?"":"s"} to do</span><span>revisions first, then new pages</span></span></li>`;
+ const more=mine.length-pick.length;
+ return `<section class="dcard donext"><div class="dch"><h3>Do this next</h3>${more>0?`<button class="dlk" onclick="go('post')">+${more} more on your turn →</button>`:""}</div>${li?`<ol class="dlist dn">${li}</ol>`:'<div class="dempty">Nothing for you right now ✓ - everything is with QA or Claude</div>'}</section>`}
 function dashChart(days,by,S){
  const W=640,H=200,pl=26,pb=22,pt=8,n=days.length||1,bw=(W-pl)/n;
  const tot=d=>S.reduce((x,s)=>x+by[d][s.k],0),mx=Math.max(4,...days.map(tot)),step=mx<=8?2:mx<=20?5:10,top=Math.ceil(mx/step)*step;
@@ -1876,7 +2052,98 @@ function dashChart(days,by,S){
   g+=`</g>`});
  return `<svg class="dchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Pages built, QA revisions and approvals per day">${g}</svg>`}
 
-applyTheme();
+// ---------------------------------------------------------------- new-user setup form + "Start here" guide (2026-11-23)
+// user: "add like a log in form but it is not its for new users so that before they enter the interface everything is
+// already set up". Not a password login: a first-open form (monday token -> your name, folders, shift, tool check) that
+// covers the tracker until it is finished. Then the 5-card guide for people who know the work but not the automation.
+let SU=null,SUSTEP=0;
+async function setupGate(){try{SU=await (await fetch("/api/setup-status")).json()}catch(e){return}
+ if(SU.done){$("#setup").style.display="none";maybeGuide();return}
+ $("#setup").style.display="flex";suRender()}
+const SUSTEPS=["Welcome","monday","Folders","Shift","Tools"];
+function suRender(){const s=SU,c=$("#setupcard");
+ const dots=`<div class="sudots">${SUSTEPS.map((t,k)=>`<span class="${k<SUSTEP?"done":k===SUSTEP?"on":""}">${k<SUSTEP?"✓":k+1}<i>${t}</i></span>`).join("")}</div>`;
+ const err=`<div class="suerr" id="suerr"></div>`;
+ let b="";
+ if(SUSTEP===0)b=`<h2>Welcome to Web Dev Tracker 👋</h2>
+  <p>Let's set up your tracker before you start. It takes about <b>3 minutes</b> and you only do it once.</p>
+  <ul class="sulist"><li>🔑 Connect <b>your monday account</b> (the tracker reads monday - it never changes anything there)</li>
+  <li>📁 Tell it <b>where your project folders are</b></li><li>🕖 Set <b>your shift hours</b></li><li>🧰 Check the <b>tools Claude needs</b></li></ul>
+  <div class="suact"><button class="sbtn" onclick="SUSTEP=1;suRender()">Let's start →</button></div>`;
+ if(SUSTEP===1)b=`<h2>🔑 Connect your monday account</h2>
+  <p>The tracker uses a personal <b>monday token</b> to see the pages assigned to you. It is saved only on this computer.</p>
+  <ol class="sulist num"><li>Open <b>monday.com</b> and click your <b>profile picture</b> (bottom-left)</li><li>Click <b>Developers</b></li><li>Open <b>My access tokens</b> → <b>Show</b> → <b>Copy</b></li></ol>
+  ${s.token?`<div class="suok">✓ A token is already saved (${esc(s.token_hint)})${s.owner_name?` - you are <b>${esc(s.owner_name)}</b>`:""}. Paste a new one only if you want to change it.</div>`:""}
+  <input type="password" id="sutok" placeholder="Paste your monday token here" autocomplete="off" onkeydown="if(event.key==='Enter')suToken()">
+  ${err}<div class="suact"><button class="sbtn alt" onclick="SUSTEP=0;suRender()">← Back</button><button class="sbtn" id="subtn" onclick="suToken()">${s.token?"Check and continue →":"Connect →"}</button></div>`;
+ if(SUSTEP===2){const f=s.folders,row=(k,l,h)=>`<label class="sufield"><span>${l} ${f[k].ok?'<b class="ok">✓ found</b>':'<b class="no">not found yet</b>'}</span><input id="su_${k}" value="${esc(f[k].path)}" placeholder="e.g. D:\\WORK FOLDER\\MLP"><small>${h}</small></label>`;
+  b=`<h2>📁 Your folders</h2><p>Where your work lives on this computer. Claude saves each page's files here.</p>
+  ${row("mlp_root","MLP projects","One folder per dealer is made inside it")}${row("city_root","City pages","Same idea, for city pages")}${row("toolkit_root","MLP toolkit","Came with the tracker (the _mlp-toolkit folder) - holds the QA checks")}
+  <label class="sucheck"><input type="checkbox" id="su_create" checked> Make the MLP and city page folders if they don't exist yet</label>
+  ${err}<div class="suact"><button class="sbtn alt" onclick="SUSTEP=1;suRender()">← Back</button><button class="sbtn" id="subtn" onclick="suFolders()">Save and continue →</button></div>`}
+ if(SUSTEP===3){const hrs=[...Array(24).keys()].map(h=>`<option value="${h}"${h===+s.shift_start?" selected":""}>${hourLabel(h)}</option>`).join("");
+  const len=[...Array(16).keys()].map(n=>`<option value="${n+1}"${n+1===+s.shift_hours?" selected":""}>${n+1} hours</option>`).join("");
+  b=`<h2>🕖 Your shift</h2><p>The tracker checks monday for news during your shift, and the end-of-shift report uses these hours.</p>
+  <div class="surow"><label class="sufield"><span>My shift starts at</span><select id="su_ss" onchange="suEnd()">${hrs}</select></label>
+  <label class="sufield"><span>and lasts</span><select id="su_sh" onchange="suEnd()">${len}</select></label></div><p class="small" id="su_end"></p>
+  ${err}<div class="suact"><button class="sbtn alt" onclick="SUSTEP=2;suRender()">← Back</button><button class="sbtn" id="subtn" onclick="suShift()">Save and continue →</button></div>`}
+ if(SUSTEP===4){const t=s.tools,line=(ok,name,why,fix)=>`<li class="${ok?"ok":"no"}"><b>${ok?"✓":"✗"} ${name}</b><span>${why}${ok?"":` - <i>${fix}</i>`}</span></li>`;
+  const allOk=t.claude&&t.vscode&&t.node&&t.toolkit_qa;
+  b=`<h2>🧰 Tools check</h2><p>These are what Claude uses to build and check pages.</p>
+  <ul class="sutools">${line(t.claude,"Claude Code","builds and fixes the pages (Start, Start now, Fix it now)","run SETUP again, then open Claude Code once and sign in")}
+  ${line(t.vscode,"VS Code","opens a page's folder and Claude chats","run SETUP again or install VS Code")}
+  ${line(t.node,"Node.js","runs the QA check and the phone check","run SETUP again or install Node.js")}
+  ${line(t.toolkit_qa,"QA tools","the checks in the MLP toolkit","check the toolkit folder in the Folders step")}</ul>
+  ${allOk?'<div class="suok">✓ Everything is ready.</div>':'<p class="small">You can finish now - a button that needs a missing tool will tell you. Fix it, then press <b>Check again</b>.</p>'}
+  ${err}<div class="suact"><button class="sbtn alt" onclick="SUSTEP=3;suRender()">← Back</button><button class="sbtn alt" onclick="suRecheck()">Check again</button><button class="sbtn" id="subtn" onclick="suFinish()">Finish and open the tracker →</button></div>`}
+ c.innerHTML=dots+b;if(SUSTEP===3)suEnd();const inp=c.querySelector("input");if(inp)inp.focus()}
+function suErr(m){const e=$("#suerr");if(e){e.textContent=m||"";e.style.display=m?"block":"none"}}
+async function suPost(body){const btn=$("#subtn");if(btn){btn.disabled=true;btn.dataset.t=btn.textContent;btn.textContent="Checking…"}
+ try{const j=await (await fetch("/api/setup",{method:"POST",body:JSON.stringify(body)})).json();if(j.error)suErr(j.error);return j}
+ catch(e){suErr("The tracker did not answer - is it still running?");return{error:1}}
+ finally{if(btn&&document.body.contains(btn)){btn.disabled=false;btn.textContent=btn.dataset.t}}}
+async function suToken(){const t=($("#sutok").value||"").trim();if(!t&&!SU.token)return suErr("Paste your monday token first.");
+ const j=await suPost({step:"token",token:t});if(j.ok){SU.token=true;SU.owner_name=j.owner_name;SU=await (await fetch("/api/setup-status")).json();toast(`Connected ✓ - hi ${j.owner_name}!`,3000);SUSTEP=2;suRender()}}
+async function suFolders(){const v=k=>$("#su_"+k).value;
+ const j=await suPost({step:"folders",mlp_root:v("mlp_root"),city_root:v("city_root"),toolkit_root:v("toolkit_root"),create:$("#su_create").checked});
+ if(j.ok){SU=await (await fetch("/api/setup-status")).json();SUSTEP=3;suRender()}}
+function suEnd(){const a=+$("#su_ss").value,b=+$("#su_sh").value;$("#su_end").textContent=`Your shift: ${hourLabel(a)} to ${hourLabel((a+b)%24)}`}
+async function suShift(){const j=await suPost({step:"shift",shift_start:+$("#su_ss").value,shift_hours:+$("#su_sh").value});
+ if(j.ok){SU=await (await fetch("/api/setup-status")).json();SUSTEP=4;suRender()}}
+async function suRecheck(){SU=await (await fetch("/api/setup-status")).json();suRender()}
+async function suFinish(){const j=await suPost({step:"finish"});if(!j.ok)return;
+ $("#setup").style.display="none";toast("You're all set ✓",2500);try{localStorage.removeItem("guideSeen")}catch(e){}load().then(()=>openGuide())}
+// "Start here" guide: 5 cards for people who know MLP work but not the automation
+const GUIDE=[
+ ["🤝","What Claude does · what you do",`<div class="g2"><div><h4>🤖 Claude</h4><ul><li>Reads the brief, Figma and content doc on monday</li><li>Builds the page, or fixes a QA revision</li><li>Runs the QA check and the phone check</li><li>Makes the <b>upload pack</b>: page files, images, monday note</li></ul></div>
+  <div><h4>👤 You</h4><ul><li>Look at the <b>Preview</b></li><li>Upload the images and paste the page in the CMS</li><li>Post the update on monday and set the status</li><li>Keep an eye on the <b>Whose turn</b> label</li></ul></div></div>
+  <p class="gtip">You don't build pages by hand anymore - you check Claude's work and post it.</p>`],
+ ["🧭","A page's journey",`<div class="gflow"><span>🤖 Claude builds</span>→<span>👤 You check &amp; post</span>→<span>👤 monday: Waiting for Review</span>→<span>🔍 QA checks</span>→<span>✅ Approved</span></div>
+  <p>If QA asks for changes, the page goes back to <b>🤖 Claude's turn</b> as a revision, then to you to post again.</p>
+  <p>Every page shows <b>whose turn</b> it is. The <b>Dashboard</b> shows <b>Do this next</b> - start there every shift.</p>`],
+ ["▶️","The four buttons",`<table class="gtab"><tr><td><b>Start</b><small>top bar</small></td><td>Claude works the whole queue - revisions first, then new pages - and stops when it's empty.</td></tr>
+  <tr><td><b>Start now</b><small>on a page</small></td><td>Claude builds just that one page.</td></tr><tr><td><b>Fix it now</b><small>on a revision</small></td><td>Claude fixes just that revision.</td></tr>
+  <tr><td><b>Stop</b><small>top bar</small></td><td>Stops any Claude run right away.</td></tr></table>
+  <p class="gtip">One Claude run at a time. A page takes about 10-40 minutes. It uses your Claude plan - the % is in the <b>⋯</b> menu; at the limit Claude pauses until it resets.</p>`],
+ ["📋","Your monday habits",`<ul><li>The tracker <b>reads</b> monday every few minutes - it <b>never changes</b> monday. Status changes are yours.</li>
+  <li><b>Mark as posted</b> is only a tick in the tracker. Then post your update and set <b>Waiting for Review</b> on monday.</li>
+  <li><b>Always post your "ready for review" update</b> (use the <b>Copy monday note</b> button). A QA comment after your update = a new revision for Claude.</li>
+  <li>QA comments that tag someone else (SEO, content team) are not revisions - the tracker skips them.</li></ul>`],
+ ["🔎","Before you post",`<ul><li>Open <b>Preview</b> and look at desktop and phone.</li><li><b>QA ✓ clean</b> = Claude's automatic check passed. QA can still find things - use your eyes.</li>
+  <li><b>Claude's notes</b> say what changed and any "Decided: …" choices Claude made.</li><li>Files are in <b>Copy · Preview · Upload pack</b> (the page's to-post folder).</li>
+  <li>Something looks wrong? Use <b>Fix it now</b>, or the <b>&gt;_</b> icon to open the page in Claude Code and tell Claude.</li></ul>
+  <p class="gtip">You can open this guide again with the <b>?</b> button at the top.</p>`]];
+let GSTEP=0;
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#guide")&&$("#guide").style.display==="flex")closeGuide()});
+function maybeGuide(){let seen=false;try{seen=!!localStorage.getItem("guideSeen")}catch(e){}if(!seen)openGuide()}
+function openGuide(){GSTEP=0;$("#guide").style.display="flex";gRender()}
+function closeGuide(){$("#guide").style.display="none";try{localStorage.setItem("guideSeen","1")}catch(e){}}
+function gRender(){const [ic,t,b]=GUIDE[GSTEP],last=GSTEP===GUIDE.length-1;
+ $("#guidecard").innerHTML=`<button class="gx" onclick="closeGuide()" title="Close">✕</button><div class="gk">Start here · ${GSTEP+1} of ${GUIDE.length}</div><h2><span>${ic}</span>${t}</h2><div class="gb">${b}</div>
+ <div class="gnav"><div class="gdots">${GUIDE.map((x,k)=>`<i class="${k===GSTEP?"on":""}" onclick="GSTEP=${k};gRender()"></i>`).join("")}</div>
+ ${GSTEP?`<button class="sbtn alt" onclick="GSTEP--;gRender()">← Back</button>`:""}<button class="sbtn" onclick="${last?"closeGuide()":"GSTEP++;gRender()"}">${last?"Got it - open the tracker":"Next →"}</button></div>`}
+
+applyTheme();setupGate();
 if(TABS.some(t=>t[0]===location.hash.slice(1)))tab=location.hash.slice(1);   // e.g. /#settings opens that tab
 load().then(()=>{const h=decodeURIComponent(location.hash.slice(1));   // /#item=<id> or /#dealer=<name> opens that panel
  if(h.startsWith("item="))openItem(+h.slice(5));else if(h.startsWith("dealer="))openDealer(h.slice(7));

@@ -49,7 +49,8 @@ const SLICE = 3000;   // screenshot height per image (tall phone pages are cut i
         res.tap = [...wrap.querySelectorAll('a,button')].filter((e) => vis(e) && !e.closest('[data-clone]') && !e.closest('p,li') && (R(e).height < 36 || R(e).width < 36))
           .map((e) => `${(e.textContent || '').trim().slice(0, 24) || name(e)} ${Math.round(R(e).width)}x${Math.round(R(e).height)}`).filter((v, k, a) => a.indexOf(v) === k);
         // photos blown up past their file (blurry on phones)
-        res.blurry = [...wrap.querySelectorAll('img')].filter((i) => { const r = R(i); if (r.width < 120 || !i.naturalWidth || i.closest('[data-clone]')) return false;
+        // data-texture + alt="" = decorative backdrop seen only in the gutters between photos (Santa Fe gallery 2026-11-20) - skipped
+        res.blurry = [...wrap.querySelectorAll('img')].filter((i) => { const r = R(i); if (r.width < 120 || !i.naturalWidth || i.closest('[data-clone]') || (i.hasAttribute('data-texture') && i.getAttribute('alt') === '')) return false;
           let dw = r.width; if (getComputedStyle(i).objectFit === 'cover') dw = Math.max(r.width, r.height * i.naturalWidth / i.naturalHeight);
           return dw / i.naturalWidth > 1.1; }).map((i) => (i.currentSrc || i.src).split('/').pop()).filter((v, k, a) => a.indexOf(v) === k);
         // images that did not load

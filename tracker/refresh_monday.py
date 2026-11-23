@@ -278,14 +278,22 @@ def parent_updates(parent_ids):
 
 # ---------------------------------------------------------------- step 3b
 def refresh_cms():
-    d = gql('query { boards(ids:[%d]) { items_page(limit:500) { items { name column_values(ids:["link_mkzsam3e"]) { text } } } } }' % CMS_BOARD)
-    cms = {}
+    """Dealer Login and Setup board: CMS name + CMS link (the column's URL) + the item id (= Credentials button, 2026-11-20)."""
+    d = gql('query { boards(ids:[%d]) { items_page(limit:500) { items { id name column_values(ids:["link_mkzsam3e"]) { text value } } } } }' % CMS_BOARD)
+    cms, links = {}, {}
     for it in d["boards"][0]["items_page"]["items"]:
-        t = (it["column_values"][0].get("text") or "").strip() if it["column_values"] else ""
+        cv = it["column_values"][0] if it["column_values"] else {}
+        t = (cv.get("text") or "").strip()
+        try:
+            url = (json.loads(cv.get("value") or "null") or {}).get("url") or ""
+        except ValueError:
+            url = ""
+        name = it["name"].strip()
         if t:
-            cms[it["name"].strip()] = t.split(" - ", 1)[0].strip()
+            cms[name] = t.split(" - ", 1)[0].strip()
+        links[name] = {"cms": url.strip() if url.strip().lower().startswith("http") else "", "item": str(it["id"])}
     json.dump({"source": f"monday board 'Dealer Login and Setup' ({CMS_BOARD}), column CMS (link_mkzsam3e)",
-               "checked_at": date.today().isoformat(), "cms": cms},
+               "checked_at": date.today().isoformat(), "board": CMS_BOARD, "cms": cms, "links": links},
               open(HERE / "cms_directory.json", "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     return len(cms)
 
@@ -396,7 +404,7 @@ def main():
         cmsf = {}
     known = {norm(k) for k in cmsf.get("cms", {})}
     # at most once a day: a dealer that is not on the Dealer Login board (e.g. Dalton Toyota) would otherwise re-trigger it
-    if cmsf.get("checked_at") != date.today().isoformat() and any(norm(i["dealer"]) not in known for i in items):
+    if "links" not in cmsf or (cmsf.get("checked_at") != date.today().isoformat() and any(norm(i["dealer"]) not in known for i in items)):
         print(f"  CMS list refreshed ({refresh_cms()} dealers) - a dealer was missing")
 
     # intake for new Assigned MLPs

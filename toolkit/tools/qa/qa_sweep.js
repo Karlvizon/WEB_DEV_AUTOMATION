@@ -53,7 +53,7 @@ async function sweep(b, dir) {
         // blurry: stretched over 1.1x its file at 1920 (region files made at the frame size are 1.0 = sharp), counting crop overflow and cover scale
         // a texture under a near-opaque overlay (parent ::before/::after alpha >= 0.85, e.g. Blazer safety bg at 0.9) can't look blurry - skipped
         const veiled = (i) => ['::before', '::after'].some((ps) => { const m = (getComputedStyle(i.parentElement, ps).backgroundColor || '').match(/rgba\([^)]*,\s*([\d.]+)\)/); return !!m && Number(m[1]) >= 0.85; });
-        res.blurry = [...document.images].filter((i) => { const r = R(i); if (r.width < 120 || !i.naturalWidth || i.closest('[data-clone]') || veiled(i)) return false;
+        res.blurry = [...document.images].filter((i) => { const r = R(i); if (r.width < 120 || !i.naturalWidth || i.closest('[data-clone]') || veiled(i) || (i.hasAttribute('data-texture') && i.getAttribute('alt') === '')) return false;
           const cs = getComputedStyle(i); let dw = r.width;
           if (cs.objectFit === 'cover') dw = Math.max(r.width, r.height * i.naturalWidth / i.naturalHeight);
           return dw / i.naturalWidth > 1.1; }).map((i) => (i.currentSrc || i.src).split('/').pop()).filter((v, k, arr) => arr.indexOf(v) === k);
@@ -129,8 +129,9 @@ async function sweep(b, dir) {
         if (bad.length) res.glued.push(`${h.tagName} "${src}" (${[...new Set(bad)].join(', ')})`);
         // ALL-CAPS heading text in the source (user 2026-11-14, Durango: "use normal text styling for headings, then just use
         // CSS to make it uppercase"). Reads textContent, so CSS text-transform does not hide it. Acronyms/brand caps allowed below.
-        const okCaps = /^(ACTIV|HEMI|AWD|FWD|RWD|SRT|LED|SUV|SUVS|MSRP|CDJR|GMC|RAM|USB|GPS|EPA|MPG|BMW|AMG|SRX|XLT|LTZ|RST|ZR2|TRX|EV|AT4|HD|LB|CPO|VIN|APR|ADAS|RV|SXT|GTS|TPMS|NHTSA|IIHS|II|III|IV|VI|HP|DOHC|SOHC|CVT|GLC|GLE|GLS|GLA|GLB|CLA|CLE|EQS|EQE|EQB|MBUX|HVAC)$/;
-        const caps = (src.match(/\b[A-Z][A-Z'’]{2,}\b/g) || []).filter((x) => !okCaps.test(x.replace(/['’]/g, '')));
+        const okCaps = /^(ACTIV|HEMI|AWD|FWD|RWD|SRT|LED|SUV|SUVS|MSRP|CDJR|GMC|RAM|USB|GPS|EPA|MPG|BMW|AMG|SRX|XLT|LTZ|RST|ZR2|TRX|EV|AT4|HD|LB|CPO|VIN|APR|ADAS|RV|SXT|GTS|TPMS|NHTSA|IIHS|II|III|IV|VI|HP|DOHC|SOHC|CVT|GLC|GLE|GLS|GLA|GLB|CLA|CLE|EQS|EQE|EQB|MBUX|HVAC|SEL|XRT)$/;
+        // "(FCA)" = an acronym in brackets after its full name keeps its caps (Santa Fe 2026-11-20)
+        const caps = (src.replace(/\([A-Z][A-Z0-9]{1,6}\)/g, '').match(/\b[A-Z][A-Z'’]{2,}\b/g) || []).filter((x) => !okCaps.test(x.replace(/['’]/g, '')));
         if (caps.length) res.caps.push(`${h.tagName} "${src.slice(0, 60)}" (${caps.slice(0, 4).join(', ')})`); });
       // same gap above every section label (QA Encore GX 2026-11-16: "make sure the spacing here is aligned with other" -
       // Exterior/Safety sat 40 under a CTA bar, the other sections 60). Unfilled sections only (bands have their own padding).

@@ -85,6 +85,34 @@ def triage(rev_txt):
 
 
 # ---------------------------------------------------------------- upload pack
+def apollo_style():
+    import importlib.util
+    sp = importlib.util.spec_from_file_location("apollo_style", str(Path(settings.get("toolkit_root")) / "tools" / "apollo_style.py"))
+    m = importlib.util.module_from_spec(sp)
+    sp.loader.exec_module(m)
+    return m
+
+
+def is_apollo(proj):
+    """Apollo CMS page? project.json "cms", else the tracker's platform for this folder / dealer (monday CMS list)."""
+    try:
+        pj = json.load(open(proj / "project.json", encoding="utf-8"))
+        if "apollo" in str(pj.get("cms") or "").lower():
+            return True
+        dealer = pj.get("dealer")
+    except (OSError, ValueError):
+        dealer = None
+    try:
+        st = json.load(open(HERE / "tracker_state.json", encoding="utf-8"))
+        for i in st.get("items", []):
+            if (i.get("folder") and Path(i["folder"]) == proj) or (dealer and i.get("dealer") == dealer):
+                if str(i.get("platform") or "").lower().startswith("apollo"):
+                    return True
+    except (OSError, ValueError):
+        pass
+    return False
+
+
 def pack(project):
     proj = Path(project)
     out = proj / "to-post"
@@ -98,23 +126,42 @@ def pack(project):
     webp = proj / "assets" / "webp"
     files = [webp / n for n in listed] if listed is not None else sorted(webp.glob("*.webp"))
     files = [f for f in files if f.exists()]
+    apollo = is_apollo(proj)
+    ap = apollo_style() if apollo else None
+    bgs = ap.jpeg_bg(proj) if apollo else {}
+    jpeg_warn = []
     for k, f in enumerate(files):
         b = imgs_dir / f"batch-{k // 8 + 1:02d}"
         b.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(f, b / f.name)
+        if apollo:   # Apollo rule (user, 2026-11-20): images must be JPEG
+            w = ap.to_jpeg(f, b / ap.jpeg_name(f.name), bgs.get(f.name, bgs.get("*")))
+            if w:
+                jpeg_warn.append(w)
+        else:
+            shutil.copy2(f, b / f.name)
     cms = proj / "cms-fields"
     paste = out / "2-paste-into-cms"
     paste.mkdir(parents=True, exist_ok=True)
     fields = sorted(cms.glob("*.*")) if cms.exists() else []
     for f in fields:
         shutil.copy2(f, paste / f.name)
+    if apollo:   # Apollo rules (user, 2026-11-20): image names -> .jpg, and the style inside a <script> (no bare <style>)
+        for f in paste.glob("*.html"):
+            t = f.read_text(encoding="utf-8")
+            w = ap.wrap(ap.jpeg_html(t))
+            if ap.has_bare_style(w) or ap.non_jpeg_refs(w):
+                raise SystemExit(f"Apollo check failed in {f.name}: bare <style> or not-JPEG image {ap.non_jpeg_refs(w)[:5]}")
+            if w != t:
+                f.write_text(w, encoding="utf-8")
+                (cms / f.name).write_text(w, encoding="utf-8")   # keep cms-fields the same as what gets pasted
     note = proj / "ready-for-review.txt"
     if note.exists():
         shutil.copy2(note, out / "3-post-on-monday.txt")
     ba = proj / "before-after"
     if ba.exists():
         shutil.copytree(ba, out / "4-before-after")
-    one_file = len(fields) == 1
+    code = [f for f in fields if f.suffix in (".html", ".css", ".js")]   # page-url.txt etc. are not CMS fields
+    one_file = len(code) == 1
     steps = [f"UPLOAD PACK - {proj.name}  ({datetime.now():%Y-%m-%d %H:%M})", ""]
     if files:
         nb = (len(files) + 7) // 8
@@ -123,9 +170,11 @@ def pack(project):
     else:
         steps.append("1. No new images to upload.")
     if one_file:
-        steps.append(f"2. Paste 2-paste-into-cms/{fields[0].name} into the page (Text/HTML view).")
-    elif fields:
-        steps.append("2. Paste the 3 fields from 2-paste-into-cms: " + ", ".join(f.name for f in fields) + " (HTML into HTML, CSS into CSS, JS into JS).")
+        steps.append(f"2. Paste 2-paste-into-cms/{code[0].name} into the page (Text/HTML view).")
+    elif code:
+        steps.append("2. Paste the 3 fields from 2-paste-into-cms: " + ", ".join(f.name for f in code) + " (HTML into HTML, CSS into CSS, JS into JS).")
+    if (cms / "page-url.txt").exists():
+        steps.append("   Page URL (page settings): " + (cms / "page-url.txt").read_text(encoding="utf-8").strip())
     revs = sorted((d.name for d in (proj / "revisions").iterdir() if d.is_dir()), reverse=True) if (proj / "revisions").exists() else []
     newest_day = revs[0][:10] if revs else ""
     mobile_rev = any(r.startswith(newest_day) and r.endswith("Final-Mobile-Check") for r in revs)   # Final mobile check (2026-11-16)
@@ -139,6 +188,11 @@ def pack(project):
             pass
         steps.append(f"3. Post 3-post-on-monday.txt as the update on the {where}" + (" and attach the images in 4-before-after." if ba.exists() else "."))
     steps.append("4. Set monday to Waiting for Review.")
+    if apollo:
+        steps.insert(1, "Apollo: the images are JPEG (.jpg) and the style is inside a <script> - upload and paste them as they are.")
+        steps += [""] + ["CHECK: " + w for w in jpeg_warn]
+        for w in jpeg_warn:
+            print("WARNING", w)
     (out / "README.txt").write_text("\n".join(steps) + "\n", encoding="utf-8")
     return out, len(files), one_file
 

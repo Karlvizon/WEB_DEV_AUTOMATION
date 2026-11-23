@@ -176,7 +176,8 @@ def as_date(v):
 TSTATE = os.path.join(HERE, "tracker_state.json")
 CONFIG = os.path.join(HERE, "tracker_config.json")
 PREV_KEYS = ("notes", "cnotes", "first_seen", "dealer", "mlp", "folder", "status", "claude", "monday_read", "questions",
-             "started", "finished", "answers", "revisions", "rev_seen", "live", "next", "posted", "due")
+             "started", "finished", "answers", "revisions", "rev_seen", "live", "next", "posted", "due",
+             "rev_status")   # rev_status kept across runs (2026-11-23) so "fixed by you" reads the real value after a restart
 
 
 def excel_enabled():
@@ -243,7 +244,8 @@ def write_state(items, prev, data, platforms):
                                              "posted": _ser(p.get("posted")), "finished": _ser(p.get("finished"))})})
         out.append(rec)
     st = {"generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "refreshed_at": data.get("refreshed_at"),
-          "owner": data.get("owner"), "automation": load_state(), "items": out, "approved": data.get("approved") or []}
+          "owner": data.get("owner"), "automation": load_state(), "items": out, "approved": data.get("approved") or [],
+          "dealer_links": dealer_links({i["dealer"] for i in items} | {a["dealer"] for a in (data.get("approved") or []) if a.get("dealer")})}
     tmp = TSTATE + ".tmp"
     json.dump(st, open(tmp, "w", encoding="utf-8"), ensure_ascii=False, indent=1, default=str)
     os.replace(tmp, TSTATE)
@@ -367,6 +369,29 @@ def platform_for(dealer, platforms):
     return f"{best} (3 CMS fields)" if best == "Dealer Inspire" else f"{best} (1 file)"
 
 
+def dealer_links(dealers):
+    """{dealer: {"cms": CMS login URL, "cred": monday item on Dealer Login and Setup}} - same name matching as platform_for.
+    Only links are kept; usernames/passwords stay on monday (user, 2026-11-20)."""
+    try:
+        d = json.load(open(CMS_DIR, encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    board, pairs = d.get("board") or 18392876953, [(set(_norm(k)), v) for k, v in (d.get("links") or {}).items()]
+    out = {}
+    for dealer in dealers:
+        want = set(_norm(dealer))
+        best, score = None, 0.0
+        for words, v in pairs:
+            if not words or not want:
+                continue
+            sc = len(want & words) / len(want | words) + (0.5 if (want <= words or words <= want) else 0)
+            if sc > score:
+                best, score = v, sc
+        if best and score >= 0.6:
+            out[dealer] = {"cms": best.get("cms") or "", "cred": MONDAY.format(board=board, item=best["item"]) if best.get("item") else ""}
+    return out
+
+
 def style_header(cell):
     cell.font = Font(name=FONT, bold=True, color="FFFFFF")
     cell.fill = PatternFill("solid", fgColor=NAVY)
@@ -393,14 +418,34 @@ def flatten(updates):
     return posts
 
 
-def latest_revision(posts, owner_id, status, owner_last):
+def for_someone_else(text, owner_name):
+    """True when a comment greets other people only (user, 2026-11-23: "Hello @Mark Ross Canaoay - please create a
+    metatags and run an SEO review" put 10 finished Mercedes-Benz of Columbus city pages back in Claude's queue).
+    Only the part before "cc:" counts; a comment with no @ at all is still read as a revision."""
+    head = re.split(r"\bcc\s*:", text or "", maxsplit=1, flags=re.I)[0]
+    if "@" not in head:
+        return False
+    low = head.lower()
+    ours = [n.lower() for n in (owner_name or "").split()[:1] if n] + [(owner_name or "").lower(), "web development", "web dev"]
+    return not any(n and n in low for n in ours)
+
+
+def monday_local(at):
+    """monday created_at (UTC, '2026-11-23T10:26:00.000Z') -> local datetime, or None."""
+    try:
+        return datetime.fromisoformat(str(at).replace("Z", "+00:00")).astimezone().replace(tzinfo=None)
+    except ValueError:
+        return None
+
+
+def latest_revision(posts, owner_id, status, owner_last, owner_name=None):
     """Return {key, at, by, text, assets} for a revision request on one subitem, or None.
 
     A revision = a comment or reply by someone other than the owner, posted after the owner's latest
     post on the MLP's Final MLP / Final Mobile Check subitems (the "ready for review"), or the
-    subitem's monday status "Needs Revision"."""
+    subitem's monday status "Needs Revision". Comments addressed only to other people are not revisions."""
     own = [owner_last] if owner_last else []
-    others = [x for x in posts if x["by_id"] != str(owner_id)]
+    others = [x for x in posts if x["by_id"] != str(owner_id) and not for_someone_else(x["text"], owner_name)]
     after = [x for x in others if own and x["at"] > max(own)]
     if not after and status == "Needs Revision" and others:
         after = [others[-1]]
@@ -411,7 +456,7 @@ def latest_revision(posts, owner_id, status, owner_last):
         return None
     last = after[-1]
     text = "\n".join(" ".join(x["text"].split()) for x in after)
-    return {"key": last["id"], "at": last["at"][:16].replace("T", " "), "by": last["by"], "text": text,
+    return {"key": last["id"], "at": last["at"][:16].replace("T", " "), "at_raw": last["at"], "by": last["by"], "text": text,
             "assets": [a for x in after for a in x["assets"] if a]}
 
 
@@ -638,16 +683,24 @@ def main(set_status=None, extra=None):
                    for x in flatten(v.get("updates")) if x["by_id"] == str(owner)]
             owner_last = max([owner_last] + sib)
         seen = set(filter(None, str(p.get("rev_seen") or "").split(",")))
+        # when Claude last finished work on this page (a revision or the build); a QA comment older than that is
+        # already handled (user, 2026-11-23: "If we already fix the revision you dont need to work on it")
+        fin = [h[0] for h in history + events if h[1] == i["dealer"] and h[2] == i["mlp"] and isinstance(h[0], datetime)
+               and (str(h[3]).startswith("Claude finished") or str(h[3]).startswith("Claude note: Revision #"))]
+        claude_done_at = max(fin) if fin else None
         for name in ("Final MLP", "City Page", "Final Mobile Check"):   # City Page: comments on the city subitem itself (2026-11-13)
             if name not in src:
                 continue
             if name == "Final MLP" and i.get("mobile_only"):   # Final MLP already approved - only the mobile check is open
                 continue
             st = src[name].get("status") if name == "Final Mobile Check" else i["status"]
-            rev = latest_revision(posts[name], owner, st, owner_last)
+            rev = latest_revision(posts[name], owner, st, owner_last, data.get("owner"))
             if not rev or rev["key"] in seen:
                 continue
             seen.add(rev["key"])
+            posted_at = monday_local(rev.get("at_raw"))
+            if posted_at and claude_done_at and posted_at < claude_done_at:
+                continue                   # Claude already fixed this one (just not uploaded yet) - not a new revision
             line = f"[{rev['at'] or date.today().isoformat()}] {name} - {rev['by']}: {rev['text'][:900]}"
             saved = save_revision(p.get("folder"), sid, name, rev)
             if saved:

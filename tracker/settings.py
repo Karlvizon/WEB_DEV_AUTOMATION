@@ -41,6 +41,8 @@ DEFAULTS = {
     # "new version available" (user, 2026-11-19 #8): the shared folder (Google Drive for desktop / OneDrive / network)
     # where the team zips + latest.json are published. Teammates: the folder they get updates from. Lead: the builder
     # (make_team_package.py) copies the new zips there. Empty = no update check.
+    # new-user setup form (2026-11-23): False until the first-open setup is finished; then the tracker opens normally
+    "setup_done": False,
     "updates_folder": "",  # pop-up when a Start / Fix it now run finishes or stops on its own     # "Fix it now" button on revision pop-ups (always asks before Claude starts)
 }
 
@@ -49,7 +51,7 @@ TYPES = {"owner_name": str, "owner_id": int, "workspace_id": int, "skip_boards":
          "shift_hours": int, "mlp_root": str, "city_root": str, "toolkit_root": str, "platform_overrides": dict,
          "watch_enabled": bool, "watch_minutes": int, "watch_when": str, "alert_revision": bool, "alert_new": bool,
          "alert_approved": bool, "alert_due": bool, "fix_from_popup": bool, "alert_claude_done": bool, "auto_qa": bool, "qa_report_day": str,
-         "updates_folder": str}
+         "updates_folder": str, "setup_done": bool}
 PLATFORMS = ["Dealer Inspire", "DealerOn", "DDC", "Dealer.com", "Apollo", "Dealer eProcess", "Sincro", "Fox Dealer",
              "Dealer Spike", "Other"]
 

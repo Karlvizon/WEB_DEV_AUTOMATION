@@ -39,6 +39,10 @@ def main() -> None:
         assert not cms.startswith("?"), f"{proj['dealer']} is not in monday's CMS list (Dealer Login and Setup board) - check it first"
         assert proj["platform"] == want, f"monday says {proj['dealer']} uses {cms}: set platform to '{want}' in project.json"
         print(f"CMS check: {proj['dealer']} -> {cms} (monday Dealer Login and Setup)")
+        name = cms.split(" (")[0]
+        if proj.get("cms") != name:   # e.g. "Apollo" -> split_fields.py puts the style inside a <script> (rule 2026-11-20)
+            proj["cms"] = name
+            (root / "project.json").write_text(json.dumps(proj, indent=1, ensure_ascii=False), encoding="utf8")
     if proj["platform"] == "dealer-inspire":
         assert proj.get("cdn", "").startswith("https://"), "Dealer Inspire pages need the media-library 'cdn' folder URL"
     for d in ("assets/webp", "cms-fields", "figma", "qa/shots", "tools/_work/source"):

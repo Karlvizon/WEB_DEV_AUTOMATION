@@ -9,6 +9,7 @@ import json
 import mimetypes
 import os
 import re
+import shutil
 import sys
 import time
 from datetime import datetime
@@ -168,6 +169,7 @@ PROMPTS = {
         "the qa/final-mobile/390-*.png screenshots against the 'Mobile (Final Mobile Check)' rules in _mlp-toolkit/qa_feedback.md "
         "and fix what fails; write 'Final mobile check: passed (390/375/430) ...' in the revision note. monday is READ-ONLY. Stop when the queue is empty or when automation_state.json says Stopped. "
         "SEO auto-fix (every build and every revision, after the page is built/fixed and before the QA sweep): run python seo_fix.py '<project folder>' --sid <subitem id> - it turns ALL-CAPS headings into Title Case with CSS uppercase, adds missing spaces in headings and missing alt text, in every copy of the page, and checks the look. Re-run split_fields/production.py pack only if you change preview.html afterwards. "
+        "CITY PAGES - design once, content per page (user rule 2026-11-20): when 2 or more city pages of the same dealer are in the queue (new or the same QA revision), build or fix ONE first and give that one the full design check (QA sweep + Final mobile check + screenshots). Make or fix the others from it and give each only a CONTENT check: none of the first page's city/state left (text, headings, meta, alt, file names, URLs), its own content doc word for word (nothing missing, nothing from the other doc), same sections/classes/buttons, its own links; look at a section in Edge (1920 + 390) only when its text is clearly longer/shorter than the checked page's (about 30%+, or an extra/missing list item). Note: 'Content checked; design from <checked page>'. "
         "Before marking any page done, open webapp/dealer_lessons.md and check every lesson listed for that page's "
         "dealer (what QA keeps sending back) - fix any that fail, and write 'Dealer lessons checked' in the note. "
         "If a monday connector call fails run: python monday_health.py connector error '<short error>' (and "
@@ -227,6 +229,77 @@ def save_token(t):
         return {"error": "monday refused that token - nothing changed. " + msg}
     log_history("monday token updated on the Settings tab")
     return {"ok": True, "msg": msg}
+
+
+# ---------------------------------------------------------------- new-user setup (2026-11-23, user: "add like a log in
+# form ... for new users so that before they enter the interface everything is already set up"). Not a password login:
+# a first-open form that fills the monday token (-> your name + id), folders and shift, and checks the tools.
+def setup_status():
+    c = settings.load()
+    folders = {k: {"path": c.get(k) or "", "ok": bool(c.get(k)) and Path(c.get(k)).is_dir()}
+               for k in ("mlp_root", "city_root", "toolkit_root")}
+    tools = {"claude": Path(CLAUDE).exists() or bool(shutil.which("claude")),
+             "vscode": Path(plat.vscode()).exists() or bool(shutil.which("code")),
+             "node": bool(shutil.which("node")),
+             "toolkit_qa": (Path(c.get("toolkit_root") or ".") / "tools" / "qa").is_dir()}
+    tok = has_token()
+    # an existing install that already works (token + your name) counts as set up - the form is for new users only
+    done = bool(c.get("setup_done")) or (tok and bool(c.get("owner_name")) and int(c.get("owner_id") or 0) > 0)
+    return {"done": done, "token": tok, "token_hint": settings.token_hint(), "owner_name": c.get("owner_name") or "",
+            "owner_id": c.get("owner_id") or 0, "folders": folders, "tools": tools,
+            "shift_start": c.get("shift_start"), "shift_hours": c.get("shift_hours"),
+            "token_file": str(settings.TOKEN_FILE)}
+
+
+def setup_save(body):
+    """One step of the setup form: {"step": "token"|"folders"|"shift"|"finish", ...}."""
+    step = body.get("step")
+    if step == "token":
+        if body.get("token"):
+            r = save_token(body.get("token"))
+            if r.get("error"):
+                return r
+        elif not has_token():
+            return {"error": "Paste your monday token first."}
+        ok, msg = check_token()                    # "Token OK - monday user: Name (12345)"
+        m = re.search(r"monday user: (.+) \((\d+)\)", msg or "")
+        if not ok or not m:
+            return {"error": "monday did not answer with your name: " + (msg or "no answer")}
+        err = settings.save({"owner_name": m.group(1).strip(), "owner_id": int(m.group(2))})
+        return {"error": err} if err else {"ok": True, "owner_name": m.group(1).strip(), "owner_id": int(m.group(2))}
+    if step == "folders":
+        ch = {}
+        for k in ("mlp_root", "city_root", "toolkit_root"):
+            v = str(body.get(k) or "").strip().strip('"')
+            if not v:
+                return {"error": "Fill in every folder."}
+            if not Path(v).is_dir():
+                if k != "toolkit_root" and body.get("create"):
+                    try:
+                        Path(v).mkdir(parents=True, exist_ok=True)
+                    except OSError as e:
+                        return {"error": f"Could not make {v}: {e}"}
+                else:
+                    return {"error": f"Folder not found: {v}" + ("" if k == "toolkit_root" else " - tick 'Make missing folders' to create it"),
+                            "missing": k}
+            ch[k] = v
+        err = settings.save(ch)
+        return {"error": err} if err else {"ok": True}
+    if step == "shift":
+        err = settings.save({"shift_start": body.get("shift_start"), "shift_hours": body.get("shift_hours")})
+        return {"error": err} if err else {"ok": True}
+    if step == "finish":
+        st = setup_status()
+        if not st["token"] or not st["owner_name"]:
+            return {"error": "The monday step is not finished yet."}
+        if not all(f["ok"] for f in st["folders"].values()):
+            return {"error": "A folder is still missing - go back to Folders."}
+        err = settings.save({"setup_done": True})
+        if err:
+            return {"error": err}
+        log_history(f"New-user setup finished for {st['owner_name']}")
+        return {"ok": True}
+    return {"error": "unknown setup step"}
 
 
 # ---------------------------------------------------------------- Figma key (2026-11-20, user: "lets proceed with figma key")
@@ -348,6 +421,25 @@ def reattach_job():
             f.write(chr(10) + f"{datetime.now():%Y-%m-%d %H:%M:%S}  tracker restarted - reconnected to this job (pid {j['pid']})" + chr(10))
     except (OSError, TypeError):
         pass
+
+
+def restore_last_job():
+    """On start-up with nothing running (2026-11-20 bug scan): bring back the last finished Claude run from
+    jobs/costs.json, so the header still says "Last start: finished 20:02 (log)" after a restart instead of nothing."""
+    if JOB.get("action"):
+        return
+    rows = read_json(JOBS / "costs.json", [])
+    if not rows or not rows[0].get("started"):
+        return
+    r = rows[0]
+    try:
+        log = JOBS / f"{datetime.strptime(r['started'], '%Y-%m-%d %H:%M:%S'):%Y%m%d-%H%M%S}-{r.get('action')}.log"
+    except ValueError:
+        return
+    with JLOCK:
+        JOB.update({"proc": None, "action": r.get("action"), "started": r["started"], "ended": r.get("ended") or r["started"],
+                    "code": 0 if r.get("status") == "finished" else 1, "log": str(log) if log.exists() else None,
+                    "claude": True, "page": None, "activity": None, "tokens": r.get("tokens"), "result": None})
 
 
 def job_state():
@@ -666,6 +758,8 @@ class H(BaseHTTPRequestHandler):
             return self.send(200, job_state())
         if u.path == "/api/settings":
             return self.send(200, settings_view())
+        if u.path == "/api/setup-status":   # new-user setup form (2026-11-23)
+            return self.send(200, setup_status())
         if u.path == "/api/state":
             return self.send(200, {"state": read_json(STATE, {}), "history": read_json(HIST, [])[:800], "worklog": work_log(),
                                    "automation": read_json(AUTO, {}), "v": version(),
@@ -713,6 +807,8 @@ class H(BaseHTTPRequestHandler):
             return self.send(200, save_settings(body.get("changes")))
         if u.path == "/api/token":
             return self.send(200, save_token(body.get("token")))
+        if u.path == "/api/setup":           # new-user setup form, one step at a time (2026-11-23)
+            return self.send(200, setup_save(body))
         if u.path == "/api/figma-token":
             return self.send(200, save_figma_token(body.get("token"), body.get("expires")))
         if u.path == "/api/figma-expiry":
@@ -820,6 +916,7 @@ if __name__ == "__main__":
     srv = ThreadingHTTPServer(("127.0.0.1", PORT), H)
     try:
         reattach_job()
+        restore_last_job()
     except Exception as e:                                 # never block the tracker from starting
         print("reattach skipped:", e, flush=True)
     threading.Thread(target=features.watcher, args=(lambda: job_state()["running"] and JOB.get("action") == "refresh",),

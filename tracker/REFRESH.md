@@ -478,3 +478,56 @@ line. 9 calmer row padding, even button heights. Styles: the "UI round 2026-11-1
   features.figma_key_status -> /api/state "figma_key"; amber line (<=7 days) / red (expired, or figma_refused.txt written by
   figma_layout.py --check) on Dashboard + All. features.figma_key_alerts (daily_jobs): one --check per day, one pop-up per step
   (7 days, 1 day, expired, refused; keyed by expiry date in watch.json figma_alerts).
+
+## CMS + Credentials links per dealer (2026-11-20)
+User asked for a CMS button, then for logins too; storing usernames/passwords needs approval, so the user chose two LINKS only.
+- refresh_monday.refresh_cms() keeps, per item on "Dealer Login and Setup" (18392876953): the CMS link column's URL (link_mkzsam3e value.url) and the item id -> cms_directory.json "links" (+ "board"). Same single query as before; re-run once if "links" is missing.
+- build_mlp_tracker.dealer_links() matches tracker dealer names to the board (same matching as platform_for) -> tracker_state.json "dealer_links" {dealer: {cms, cred}}; features.dealer_card adds cms_url / cred_url.
+- index.html dlinks(): "CMS" + "Credentials" pill buttons (.dbtn in span.dbtns, made solid 2026-11-20 after "not visible") on dealer rows, one-page dealer rows, Approved rows and the page panel header; dealer card has "Open CMS" / "Credentials" buttons. No link = no button (e.g. Mercedes-Benz of Alexandria is not on the board). HOWTO "The page panel" topic updated.
+- Never store usernames/passwords in the tracker - they stay on monday.
+
+## City pages: design once, content per page (2026-11-20)
+User: "you dont need to check them one by one. you just need to check the design of that 1 page and implement it to others. Just be mindful of their content since every city have a different content."
+- batch.py copy_prompt now uses _copy_common(): copied pages get SEO auto-fix + a CONTENT check (no sample city left, own doc word for word, same sections, own links; Edge look only for sections whose text length differs a lot) - no full QA sweep / Final mobile check per copy.
+- server.py PROMPTS['start'] has the same rule for several city pages of one dealer in the queue (new or same revision).
+- <City pages folder (Settings tab)>\CLAUDE.md has it for chats opened by hand.
+
+## Layout fix (2026-11-20)
+Wide-screen grid: the sidebar spanned rows 2-6 of auto rows, so on a short list (e.g. Final MLP revision with 1 page) the browser stretched the tiles/now rows -> big empty gap. Now grid-template-rows: auto x5 + 1fr and #tabs grid-row 2/7, so the empty last row takes the extra height. Keep that when adding a new row to the layout.
+
+## monday pick-up gaps (2026-11-20)
+User: "there is a new assigned to me but the tracker is not picking them up (One Legacy Motors)". monday activity log vs tracker history: 7 city pages assigned 09:48 showed at 19:01 (no checks outside the shift); 5 assigned Nov 19 20:04 showed 00:43 (old city-page detection bug, fixed that night). Nothing was missing at check time (all 317 assignments on the 64 boards matched).
+- features.watcher: outside the shift the quick check now runs every OFF_SHIFT_EVERY = 30 min (was: no check at all).
+- While a Claude job runs: new_during_job() runs the read-only --signature check, pops up "New page assigned on monday" once per id (watch.json told_new) and leaves the saved signature alone, so the full refresh runs as soon as the job ends (was: no check during runs - a 72-min run hid everything).
+- index.html isMlpRev = only "Final MLP revision" (city page revisions were listed in the Final MLP revision tab - Orlando, FL).
+- Not changed: monday build briefs posted as comments on already-built pages ("Here are the We Buy Page Instructions") are recorded as revision #1 -> those pages sit under "Ready to post - revisions".
+
+## Bug scan + "Not started" tab (2026-11-20, user: "Scan the tracker. Check bugs... some item is not showing as well as the automation. And also add a new tab for the thing that are not yet being work by claude")
+- Checked: every tab renders with no script errors at 390/800/1400; monday vs tracker - every open assigned Final MLP / city page is on the tracker; Wray Ford's 10 pages were assigned on monday ~20:55 and showed 20:57 (the "assigned 2026-11-19" text is monday's date column, not a delay). The only 404 is the browser's favicon request.
+- Fixed: after a server restart the header lost the last Claude run ("Last start: finished 20:02 (log)" was gone, log empty) - server.restore_last_job() rebuilds it from jobs/costs.json[0] at start-up.
+- Fixed: 701-1179 px the one-row tab bar was 24px wider than the window (whole page scrolled sideways) - CSS rule after the 1001-1400 foldnote rule.
+- Not a bug, now visible: Singing River Nissan 2027 Sentra has a blank monday status -> it sat in the folded "On hold / other" stage and Claude skips it.
+- New Work tab "Not started" (key notstarted, after All; nsPage/nsBlogs/nsOther/notStartedView in index.html): revisions waiting for Claude, pages Claude hasn't started (any monday status, blank too, with Start now + "Start the queue"), blogs that are your turn with no folder (BLOGS upcoming turn); folded "Other open monday tasks" (Metatags/SEO Review/Mobile Check/Site Live with a status, from /api/assigned). Count = pages + blogs. HOWTO "Dashboard and the menu" has a line for it.
+
+## Simpler view - "whose turn" (2026-11-23, user: "The tracker is somehow confusing" -> "Go ahead with all of your suggestion")
+- Every page shows ONE label in the "Whose turn" column: 👤 Your turn (post it / needs you / set monday) · 🤖 Claude's turn
+  (fix the QA revision / not started / working now) · 🔍 With QA · ⏸ On hold. monday status + Claude status are in the hover.
+  index.html turnOf()/turnChip(); one turn per page (a page with no monday status is On hold, not Claude's).
+- Work tabs: All · 👤 Your turn · post · 🤖 Claude's turn (was "Not started"; counts pages only - the 14 blogs are counted on
+  the Blogs tab) · 🔍 With QA · Revisions · Final MLP · Revisions · Mobile · ⏸ On hold. "City Pages" tab -> "City pages only"
+  filter on every list (old #city links still work). Red revision chips show only while the revision is Claude's turn.
+- Dashboard: "Do this next" box (your 3 most urgent actions: late first, then fixed revisions, then new pages, + "Press
+  Start" when Claude has queue work); tiles say Your turn / Claude's turn / With QA; chart moved below "Due next".
+- Header: status badge, Start, Stop (and a run while it runs). monday check, last Claude run, Claude usage, Refresh from
+  monday and Theme are in the ⋯ menu; an orange dot on ⋯ = monday or usage needs a look. Backup: webapp/index.html.bak-20261123.
+
+## New-user setup form + "Start here" guide (2026-11-23, user: "add like a log in form ... for new users so that before they enter the interface everything is already set up")
+- Not a password login. On first open (settings "setup_done" false AND no working token+owner) a full-screen form covers the
+  tracker: 1 Welcome, 2 monday token (-> owner name + id read from monday), 3 folders (MLP, city pages, toolkit; can make the
+  missing MLP/city folders), 4 shift hours, 5 tools check (Claude Code, VS Code, Node.js, toolkit QA tools). Finish sets
+  setup_done. Server: /api/setup-status (GET), /api/setup (POST, one step at a time). An install that already has a token and
+  owner counts as set up (the lead never sees the form). Team zips ship owner_id 0, so teammates get the form.
+- "Start here" guide: 5 cards for people who know MLP work but not the automation (what Claude does / what you do, a page's
+  journey, the four buttons, monday habits, before you post). Opens after setup and on first visit (localStorage guideSeen),
+  and any time from the "?" button in the header.
+- Every "post it" box says "then set monday to Waiting for Review yourself" (Mark as posted is tracker-only).

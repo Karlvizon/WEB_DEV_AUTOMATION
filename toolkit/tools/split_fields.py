@@ -96,6 +96,21 @@ def main() -> int:
         one = root / "cms-fields"
         one.mkdir(exist_ok=True)
         page = body.replace(LOCAL, CDN) if PROJ.get("cdn") else body
+        if "apollo" in str(PROJ.get("cms") or "").lower():
+            # Apollo rule (user, 2026-11-20): the paste file follows the reference structure - <script> const css, .main-div markup, <script> page JS + CMS fixes
+            import importlib.util
+            sp = importlib.util.spec_from_file_location("apollo_style", Path(__file__).resolve().parent / "apollo_style.py")
+            ap = importlib.util.module_from_spec(sp)
+            sp.loader.exec_module(ap)
+            page = ap.wrap(ap.jpeg_html(page))   # + JPEG rule (2026-11-20): image names -> .jpg
+            assert not ap.has_bare_style(page), "Apollo: a bare <style> is still in the page"
+            assert not ap.non_jpeg_refs(page), "Apollo: a .webp/.png image is still in the page"
+            for name, warn in ap.jpeg_folder(root):   # assets/jpg/*.jpg = what gets uploaded
+                if warn:
+                    print("WARNING", warn)
+            print("Apollo: reference structure (const css script, .main-div markup, JS + CMS fixes), images are .jpg (assets/jpg)")
+            for prob in ap.structure_problems(page):
+                print("WARNING Apollo structure:", prob)
         (one / "{{NAME}}.html").write_text((page + LF).replace(LF, nl), encoding="utf-8", newline="")
         print(f"one-file page: {one / '{{NAME}}.html'}  ({len(page)/1024:.1f} KB: wrapper + font link + <style> + markup + <script>)")
         print(f"(three-field copies for the lint/placement tests: {out_dir})")
