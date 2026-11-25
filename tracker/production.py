@@ -113,9 +113,64 @@ def is_apollo(proj):
     return False
 
 
+CODE_LABEL = {".html": "HTML", ".css": "CSS", ".js": "JS"}
+
+
+def _keep_baseline(proj, out):
+    """What is in the CMS now = the paste files of the pack QA reviewed. When a new revision folder appears, the old pack's
+    paste files are kept in qa/cms-baseline/ (tagged with that revision), so later packs for the same revision compare
+    against what is live, not against an unposted rebuild."""
+    revs = sorted(d.name for d in (proj / "revisions").iterdir() if d.is_dir()) if (proj / "revisions").exists() else []
+    if not revs:
+        return None
+    base, old = proj / "qa" / "cms-baseline", out / "2-paste-into-cms"
+    tag = base / "_revision.txt"
+    if tag.exists() and tag.read_text(encoding="utf-8").strip() == revs[-1]:
+        return base
+    if not old.is_dir():
+        return base if base.is_dir() else None   # older baseline is the best guess left
+    if base.exists():
+        shutil.rmtree(base)
+    shutil.copytree(old, base)
+    imgs = sorted(f.name for f in (out / "1-upload-images").rglob("*") if f.is_file()) if (out / "1-upload-images").is_dir() else []
+    (base / "_images.txt").write_text("\n".join(imgs), encoding="utf-8")   # images already uploaded for the reviewed version
+    tag.write_text(revs[-1], encoding="utf-8")
+    return base
+
+
+def cms_changes(paste, base, images):
+    """Per CMS field: changed (+ lines) / no change / new, for the revision note (user, 2026-11-25: "put a description in
+    the revision what to put in the CMS ... if you change the HTML indicate it")."""
+    import difflib
+    rows = []
+    known = set((base / "_images.txt").read_text(encoding="utf-8").split("\n")) if base and (base / "_images.txt").exists() else None
+    n_images = len([n for n in images if n not in known]) if known is not None else len(images)
+    for f in sorted(paste.glob("*.*"), key=lambda f: ({".html": 0, ".css": 1, ".js": 2}.get(f.suffix.lower(), 3), f.name)):
+        lab = CODE_LABEL.get(f.suffix.lower()) or f.stem.replace("-", " ").capitalize().replace("url", "URL")
+        o = base / f.name if base else None
+        if not o or not o.exists():
+            rows.append({"file": f.name, "label": lab, "state": "new" if base else "paste"})
+            continue
+        a, b = o.read_text(encoding="utf-8", errors="replace").splitlines(), f.read_text(encoding="utf-8", errors="replace").splitlines()
+        if a == b:
+            rows.append({"file": f.name, "label": lab, "state": "same"})
+        else:
+            n = sum(1 for l in difflib.unified_diff(a, b, lineterm="", n=0) if l[:1] in "+-" and not l.startswith(("+++", "---")))
+            rows.append({"file": f.name, "label": lab, "state": "changed", "lines": n})
+    parts = [f"{r['label']} changed ({r['lines']} line{'s' if r['lines'] != 1 else ''}) - paste it" if r["state"] == "changed"
+             else f"{r['label']} new - paste it" if r["state"] == "new" else f"{r['label']} no change - skip"
+             for r in rows if r["state"] != "paste"]
+    parts.append(f"{n_images} new image{'s' if n_images != 1 else ''} to upload" if n_images else "no new images")
+    line = ("CMS: " + " | ".join(parts)) if base else ""
+    if base and not any(r["state"] in ("changed", "new") for r in rows):
+        line += " (nothing to paste)"
+    return {"revision": bool(base), "fields": rows, "images": n_images, "line": line}
+
+
 def pack(project):
     proj = Path(project)
     out = proj / "to-post"
+    base = _keep_baseline(proj, out)
     if out.exists():
         shutil.rmtree(out)
     imgs_dir = out / "1-upload-images"
@@ -193,6 +248,11 @@ def pack(project):
         steps += [""] + ["CHECK: " + w for w in jpeg_warn]
         for w in jpeg_warn:
             print("WARNING", w)
+    ch = cms_changes(paste, base, [f.name for f in imgs_dir.rglob("*") if f.is_file()] if imgs_dir.is_dir() else [])
+    (out / "cms-changes.json").write_text(json.dumps(ch, indent=1), encoding="utf-8")
+    if ch["line"]:
+        steps[1:1] = ["", "WHAT TO CHANGE IN THE CMS (this revision vs the version QA reviewed):", "  " + ch["line"], ""]
+        print(ch["line"])
     (out / "README.txt").write_text("\n".join(steps) + "\n", encoding="utf-8")
     return out, len(files), one_file
 

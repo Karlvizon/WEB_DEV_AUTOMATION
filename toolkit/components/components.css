@@ -38,7 +38,8 @@
 #{{ID}} .{{P}}-wrap button{font-family:var(--{{P}}-font) !important;font-style:normal !important;letter-spacing:normal !important;text-shadow:none !important;}
 #{{ID}} .{{P}}-wrap h1,#{{ID}} .{{P}}-wrap h2,#{{ID}} .{{P}}-wrap h3,#{{ID}} .{{P}}-wrap h4{text-transform:none !important;margin:0 !important;padding:0 !important;border:0 !important;background:none !important;}
 #{{ID}} .{{P}}-wrap b{font-weight:700 !important;}
-#{{ID}} .{{P}}-wrap .{{P}}-r{display:inline !important;font-size:max(0.645em, 11px) !important;line-height:0 !important;vertical-align:baseline !important;font-weight:inherit !important;color:inherit !important;letter-spacing:inherit !important;}
+/* (R)/TM like the live Mercedes-Benz of Alexandria GLS page (user 2026-11-25) - run tools/tm_fix.py: it measures the page font and shrinks + raises the (R) when the font draws a big one */
+#{{ID}} .{{P}}-wrap .{{P}}-r{display:inline !important;font-family:inherit !important;font-weight:inherit !important;color:inherit !important;letter-spacing:inherit !important;font-size:1em !important;line-height:inherit !important;vertical-align:baseline !important;}
 #{{ID}} .{{P}}-wrap button{margin:0 !important;font-size:16px !important;cursor:pointer !important;-webkit-appearance:none !important;appearance:none !important;text-transform:none !important;}
 #{{ID}} .{{P}}-wrap .{{P}}-line{display:block !important;}
 #{{ID}} .{{P}}-wrap .{{P}}-dl{display:inline !important;}
@@ -286,7 +287,7 @@
   #{{ID}} .{{P}}-wrap h1.{{P}}-hero__h{align-items:center !important;gap:12px !important;text-align:center !important;}
   #{{ID}} .{{P}}-wrap .{{P}}-hero__nm{display:block !important;width:auto !important;height:auto !important;max-width:100% !important;padding:10px 0 !important;font-size:var(--fs60) !important;line-height:1.15 !important;white-space:normal !important;text-align:center !important;}
   #{{ID}} .{{P}}-wrap .{{P}}-hero__nm .{{P}}-line,#{{ID}} .{{P}}-wrap .{{P}}-hero__l2{display:inline !important;font-size:var(--fs60) !important;}
-  #{{ID}} .{{P}}-wrap .{{P}}-hero__nm .{{P}}-r{font-size:max(0.5em, 11px) !important;vertical-align:super !important;}
+  #{{ID}} .{{P}}-wrap .{{P}}-hero__nm .{{P}}-r{display:inline !important;font-family:inherit !important;font-weight:inherit !important;color:inherit !important;letter-spacing:inherit !important;font-size:1em !important;line-height:inherit !important;vertical-align:baseline !important;}
   #{{ID}} .{{P}}-wrap .{{P}}-hero__loc{font-size:var(--fs42) !important;text-align:center !important;}
   #{{ID}} .{{P}}-wrap .{{P}}-hero__p{padding:10px !important;font-size:16px !important;white-space:normal !important;text-align:center !important;}
   #{{ID}} .{{P}}-cta{height:auto !important;padding:20px !important;}

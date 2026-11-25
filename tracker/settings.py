@@ -6,6 +6,7 @@ MONDAY_API_TOKEN environment variable) and the web app only ever shows its last 
 """
 import json
 import os
+import re
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -38,6 +39,8 @@ DEFAULTS = {
     "auto_qa": True,
     "qa_report_day": "Fri",     # weekly QA report is made after this day's shift (user 2026-11-14)            # run the QA sweep by itself on every ready page that changed (user 2026-11-14)
     "alert_claude_done": True,
+    # pop-ups only while the tracker page is open in a browser (user, 2026-11-24: "its sending notification even tho its not open")
+    "popups_only_when_open": True,
     # "new version available" (user, 2026-11-19 #8): the shared folder (Google Drive for desktop / OneDrive / network)
     # where the team zips + latest.json are published. Teammates: the folder they get updates from. Lead: the builder
     # (make_team_package.py) copies the new zips there. Empty = no update check.
@@ -50,7 +53,7 @@ DEFAULTS = {
 TYPES = {"owner_name": str, "owner_id": int, "workspace_id": int, "skip_boards": list, "shift_start": int,
          "shift_hours": int, "mlp_root": str, "city_root": str, "toolkit_root": str, "platform_overrides": dict,
          "watch_enabled": bool, "watch_minutes": int, "watch_when": str, "alert_revision": bool, "alert_new": bool,
-         "alert_approved": bool, "alert_due": bool, "fix_from_popup": bool, "alert_claude_done": bool, "auto_qa": bool, "qa_report_day": str,
+         "alert_approved": bool, "alert_due": bool, "fix_from_popup": bool, "alert_claude_done": bool, "popups_only_when_open": bool, "auto_qa": bool, "qa_report_day": str,
          "updates_folder": str, "setup_done": bool}
 PLATFORMS = ["Dealer Inspire", "DealerOn", "DDC", "Dealer.com", "Apollo", "Dealer eProcess", "Sincro", "Fox Dealer",
              "Dealer Spike", "Other"]
@@ -199,3 +202,41 @@ def figma_hint():
 def token_hint():
     t = token()
     return ("..." + t[-4:]) if t else ""
+
+
+# ---------------------------------------------------------------- folders (2026-11-24)
+def _n(s):
+    return re.sub(r"[^a-z0-9]", "", str(s).lower())
+
+
+def dealer_folder(dealer, kind="MLP"):
+    """<mlp_root or city_root>/<dealer>, matched loosely ("Huston CDJR " = "Huston CDJR"). None if missing."""
+    cfg = load()
+    root = Path(cfg["city_root"] if kind == "City Page" else cfg["mlp_root"])
+    if (root / dealer).is_dir():
+        return root / dealer
+    if root.is_dir():
+        for d in root.iterdir():
+            if d.is_dir() and _n(d.name) == _n(dealer):
+                return d
+    return None
+
+
+def page_folder(dealer, mlp, kind="MLP", known=None):
+    """The page's own folder (never the dealer folder): `known` if it exists, else the dealer subfolder named after the
+    page ("2027 Audi RS Q8, Audi Stuart", "Mulberry, FL"). None if the page has no folder yet.
+    (user, 2026-11-24: "it cant see the preview.html in the tracker but its there" - the saved folder was often empty)"""
+    if known and Path(known).is_dir():
+        return Path(known)
+    d = dealer_folder(dealer, kind)
+    if not d:
+        return None
+    page, full = _n(mlp), _n(f"{mlp}, {dealer}")
+    subs = [s for s in d.iterdir() if s.is_dir()]
+    for s in subs:
+        if _n(s.name) in (page, full):
+            return s
+    for s in subs:
+        if page and _n(s.name).startswith(page):
+            return s
+    return None

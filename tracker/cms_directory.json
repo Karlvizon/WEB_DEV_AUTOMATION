@@ -1,6 +1,6 @@
 {
  "source": "monday board 'Dealer Login and Setup' (18392876953), column CMS (link_mkzsam3e)",
- "checked_at": "2026-11-23",
+ "checked_at": "2026-11-26",
  "board": 18392876953,
  "cms": {
   "Acura of Ocean": "Dealer Inspire",
@@ -76,6 +76,10 @@
   "Mercedes-Benz of Columbus": "Dealer Inspire"
  },
  "links": {
+  "Mercedes-Benz of Alexandria": {
+   "cms": "",
+   "item": "13627199910"
+  },
   "Acura of Ocean": {
    "cms": "https://www.acuraofocean.com/wp/wp-admin/",
    "item": "10828734646"

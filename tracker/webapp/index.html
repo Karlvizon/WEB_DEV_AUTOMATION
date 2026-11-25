@@ -182,7 +182,8 @@ input.num{border-radius:8px;text-align:center;padding:5px!important}
 /* ===== layering: panels and pop-ups always above the sticky header (user 2026-11-13: "avoid cut outs") ===== */
 #drawer{z-index:40}#joblog{z-index:45}#modal{z-index:50}#zoom{z-index:60}.toast{z-index:70}
 #drawer .hd{z-index:2}
-/* Open in Claude Code icon (2026-11-19) */
+.failbar{background:#D92D20;color:#fff;padding:9px 18px;font-size:13px;line-height:1.45}.failbar .fd{opacity:.85;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+/* Open in VS Code icon (2026-11-19, was Open in Claude Code) */
 .usechip{border-radius:999px;background:#ffffff22;color:#fff;font-size:12px;font-weight:600;padding:5px 11px;white-space:nowrap;cursor:help}
 .usechip.amber{background:#F79009;color:#1d2939}.usechip.red{background:#D92D20;color:#fff}.usechip.old{opacity:.6}
 .updchip{border:0;border-radius:999px;background:#FDB022;color:#1d2939;font-weight:700;font-size:12px;padding:5px 12px;cursor:pointer}
@@ -389,7 +390,7 @@ html[data-theme="dark"] .bulk{background:#102A4C;border-color:#1D4ED8;color:#93C
 /* ===== posting helpers + auto QA (user 2026-11-14: "1 and 2") ===== */
 .cps{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
 .cpb{border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;cursor:pointer}
-.cpb:hover{border-color:#2E90FA;color:#175CD3}.cpb.note{border-style:dashed}
+.cpb:hover{border-color:#2E90FA;color:#175CD3}.cpb.note{border-style:dashed}.cpb.same{opacity:.5}
 .cpb.ok{background:#ECFDF3;border-color:#12B76A;color:#027A48}.cpb.bad{background:#FEF3F2;border-color:#F04438;color:#B42318}
 .bts{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin-top:7px;font-size:11.5px}
 .btl{font-weight:700;color:var(--muted);margin-right:2px}
@@ -544,6 +545,9 @@ html[data-theme="dark"] .ctag{background:#1F2937;color:#D0D5DD}
 .brow .mbtn:hover{background:#FFEFA8}.bst{font-weight:600;color:var(--ink)}
 .bcard h3 .mlink{font-size:11px;font-weight:600;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:1px 6px}
 .bcard h3 .mlink:hover{color:var(--ink);border-color:var(--muted)}.bnone a{color:inherit;text-decoration:none}.bnone a:hover b{text-decoration:underline}
+.bgstart{margin-left:6px;font:700 11px/1 inherit;text-transform:none;letter-spacing:0;padding:5px 10px;border-radius:6px;border:0;background:#16a34a;color:#fff;cursor:pointer}.bgstart:disabled{opacity:.45;cursor:default}.bgstart.on{background:var(--line);color:var(--ink);cursor:default}.bgnone{margin-left:6px;font-size:11px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted)}
+.bnoauto{margin-left:6px;font-size:10.5px;font-weight:700;text-transform:none;letter-spacing:0;color:#b45309;background:#fef3c7;border-radius:6px;padding:3px 8px}
+.bgroup{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 8px;display:flex;gap:6px;align-items:center}.bgroup:first-of-type{margin-top:4px}
 .bsec{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:10px 0 2px}
 .bline{padding:6px 0;border-top:1px solid var(--line)}.bsec+.bline,.bsec+.brow,summary+.bline{border-top:0}
 .bln{color:var(--ink);text-decoration:none;font-size:13px;line-height:1.35}.bln:hover{text-decoration:underline}
@@ -826,6 +830,7 @@ html[data-theme="dark"] #tabs input{background:#111827 url("data:image/svg+xml,%
 <div id="unplaced"></div>
 <nav id="tabs"></nav>
 <section id="nownext" style="display:none"></section>
+<div id="failbar" class="failbar" style="display:none"></div>
 <main id="view"></main>
 <aside id="drawer"></aside>
 <!-- new-user setup form + Start here guide (2026-11-23) -->
@@ -928,7 +933,7 @@ function remind(sids){const n=sids.length;
 async function vsc(dealer,type){const j=await (await fetch("/api/vscode",{method:"POST",body:JSON.stringify({dealer,type})})).json();toast(j.ok?j.msg:j.error)}
 // CMS + Credentials (2026-11-20): links only, from monday "Dealer Login and Setup" - logins stay on monday
 const dlinks=(dealer,cls="dbtn")=>{const l=((D&&D.state&&D.state.dealer_links)||{})[dealer]||{};const b=(l.cms?`<a class="${cls}" href="${esc(l.cms)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open the dealer's CMS (backend) - link from monday Dealer Login and Setup">CMS</a>`:"")+(l.cred?`<a class="${cls}" href="${esc(l.cred)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open this dealer on monday Dealer Login and Setup - the username and password are there">Credentials</a>`:"");return b?`<span class="dbtns">${b}</span>`:""};
-const ccBtn=t=>`<button class="ccb" title="Open in Claude Code (VS Code) - ${typeof t==="object"?"the dealer folder":"this page's folder"}, with the details typed in" onclick="event.stopPropagation();openClaude(${esc(JSON.stringify(t))})">${ICON.claude}</button>`;   // 2026-11-19
+const ccBtn=t=>`<button class="ccb" title="Open this page's folder in VS Code" onclick="event.stopPropagation();openClaude(${esc(JSON.stringify(t))})">${ICON.claude}</button>`;   // 2026-11-19; page folder only since 2026-11-24
 const vsBtn=(d,t)=>`<button class="vs" title="Open this dealer's folder in VS Code" onclick="event.stopPropagation();vsc(${esc(JSON.stringify(d))},'${t||"MLP"}')">VS Code</button>`;
 // "Not started" tab (user, 2026-11-20: "add a new tab for the things that are not yet being worked by claude, I want to see
 // all of them"): every page / revision Claude has not started (any monday status, blank included), blogs waiting to be
@@ -948,7 +953,7 @@ function notStartedView(){
  const byDue=(a,b)=>String(a.due||a.date||"9999").localeCompare(String(b.due||b.date||"9999"));
  const due=d=>{if(!d)return '<span class="small grey">no due date</span>';const late=d<today;return `<span class="small${late?" late":""}" style="${late?"color:#D92D20;font-weight:600":""}">${late?"late · ":"due "}${esc(fmtDate(d))}</span>`};
  const st=s=>`<span class="achip" style="--mc:${MC[s]||"#98A2B3"}" title="monday status">${esc(s||"no status on monday")}</span>`;
- const why=i=>!i.status?"blank monday status - Claude skips it until it is set":i.claude==="Revision needed"?"QA asked for changes - Claude fixes it on Start":isPending(i)?"in Claude's queue - press Start or Start now":"monday status keeps it out of Claude's queue";
+ const why=i=>i.claude==="Claude working on it"?(JOBST&&JOBST.running&&JOBST.claude?"Claude is building it now":"marked in progress, but no Claude run is going - press Start now"):!i.status?"blank monday status - Claude skips it until it is set":i.claude==="Revision needed"?(queueOn()?"Claude fixes it in the running queue - nothing to press":"QA asked for changes - press Start the queue"):isPending(i)?(queueOn()?(i.type==="City Page"?"Claude does it in the running queue (with the other city pages) - nothing to press":"Claude does it in the running queue - nothing to press"):"waiting for Claude - press Start the queue"):"monday status keeps it out of Claude's queue";
  const card=(title,list,row)=>{const byD={};list.forEach(x=>(byD[x.dealer]=byD[x.dealer]||[]).push(x));
   return Object.entries(byD).sort((a,b)=>byDue(a[1].sort(byDue)[0],b[1].sort(byDue)[0])||a[0].localeCompare(b[0])).map(([d,a])=>
    `<div class="bcard"><h3><span class="dlink" onclick="openDealer(${esc(JSON.stringify(d))})">${esc(d)}</span><span class="ct">${a.length}</span></h3>${a.map(row).join("")}</div>`).join("")};
@@ -977,17 +982,20 @@ const TABS=[["dash","Dashboard",null],["all","All",i=>true],["post","👤 Your t
 async function load(){const r=await fetch("/api/state");D=await r.json();V=D.v;updNotice();usageChip();if(!BLOGS)loadBlogs().then(()=>{if(BLOGS)render()});loadAsg().then(()=>{if(ASG)render()});loadSeo().then(()=>{if(SEO)render()});render();if(openSid)openItem(openSid,true);loadSince()}
 let JOBST=null;
 // user 2026-11-18: when Claude finishes building a blog, the Blogs tab shows it (VS Code, Preview, Copy HTML) without a refresh
-let BLOGRUN=false;
+let BLOGRUN="";
 async function blogJobDone(){await loadBlogs();if(BLOGS&&tab==="blogs")render();toast("Blog built - it is on the Blogs tab",3000)}
 async function poll(){try{const r=await fetch("/api/version");const j=await r.json();
-const bj=j.job&&j.job.action==="blog";if(bj&&j.job.running)BLOGRUN=true;else if(BLOGRUN&&!(bj&&j.job.running)){BLOGRUN=false;blogJobDone()}
+// a blog run (Build it, or one blog of a Blogs CMS Start) ended -> reload the Blogs tab; a new one started -> redraw it (2026-11-26)
+const bk=j.job&&j.job.unit==="blog"&&j.job.proc_running?(j.job.page||"blog"):"";if(bk!==BLOGRUN){const was=BLOGRUN;BLOGRUN=bk;if(was)setTimeout(blogJobDone,0);else if(tab==="blogs"&&BLOGS)setTimeout(render,0)}
 showJob(j.job);showWatch(j.watch);showSess(j.session);showQaAll(j.qa_all);showAutoQa(j.auto_qa);if(j.v!==V)load()}catch(e){}}
 const fmtTok=n=>n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?Math.round(n/1e3)+"k":String(n||0);
 const mins=a=>{if(!a)return"";const m=Math.round((Date.now()-new Date(a.replace(" ","T")))/60000);return m<60?m+" min":Math.floor(m/60)+"h "+(m%60)+"m"};
 function jobText(j){if(!j.running)return null;if(!j.claude)return "Refreshing from monday";
- const p=j.progress,t=j.tokens||{};const where=p?`${p.page&&p.page!=="-"?p.page+" - ":""}${p.step}${p.pos?" ("+p.pos+")":""}`:(j.action==="fix"?"Fixing "+(j.page||"revision"):j.action==="build"?"Building "+(j.page||"page"):"Working the queue");
+ const p=j.progress,t=j.tokens||{};const where=p?`${p.page&&p.page!=="-"?p.page+" - ":""}${p.step}${p.pos?" ("+p.pos+")":""}`:(j.action==="fix"?"Fixing "+(j.page||"revision"):j.action==="build"?"Building "+(j.page||"page"):blogQ()?"Building "+blogQ().cms+" blogs":"Working the queue");
  return `${where} · ${mins(j.started)} · ${fmtTok((t.input||0)+(t.output||0)+(t.cache_write||0))} tokens`}
-function showWatch(w){showHealth(w);const e=$("#watch");if(!w){e.textContent="";return}
+function showFail(w){const e=$("#failbar");if(!e)return;const f=w&&w.fail;if(!f){e.style.display="none";return}   // loud update failure (2026-11-25)
+ e.style.display="block";e.innerHTML=`⚠ <b>The monday update is failing</b> since ${esc(String(f.since||"").slice(11,16))} (${f.count} ${f.count===1?"try":"tries"}) - what you see may be out of date. <span class="fd">${esc(f.what)}: ${esc(f.detail)}</span> It tries again every few minutes; this bar goes away when an update works.`}
+function showWatch(w){showHealth(w);showFail(w);const e=$("#watch");if(!w){e.textContent="";return}
  e.textContent=!w.enabled?"Auto-update off":w.busy?"Checking monday…":!w.in_window?"Auto-update waits for your shift":`Auto-update on · last check ${String(w.last_check||"").slice(11,16)||"-"}${w.error?" (error)":""}`;
  e.title=(w.error?"Last error: "+w.error+"\n":"")+(w.last_change?"Last change found: "+w.last_change+" - "+(w.last_result||""):"No change found yet")}
 // #1 (2026-11-20): monday tasks assigned to you that the tracker could not place - one amber line, never silent.
@@ -1103,7 +1111,9 @@ async function fixNow(sid){const it=((D.state||{}).items||[]).find(i=>i.subitem_
 // "Start now" on pending pages (2026-11-19, user: "add a start now button for the projects that are pending"):
 // Claude builds that one page now (server action "build"), then stops. One Claude job at a time.
 const isPending=i=>i.claude==="Not started"&&["Assigned","Working on it"].includes(i.status);
-const startBtn=i=>isPending(i)?`<button class="snow" title="Claude builds this page now, then stops" onclick="event.stopPropagation();startNow(${i.subitem_id})">Start now</button>`:"";
+const queueOn=()=>!!(JOBST&&JOBST.running&&JOBST.action==="start"&&!(JOBST.queue&&JOBST.queue.cms));   // a Blogs CMS Start is not the page queue (2026-11-26)
+const blogQ=()=>JOBST&&JOBST.running&&JOBST.queue&&JOBST.queue.cms?JOBST.queue:null;   // Start queue running: no "press" hints, no Start now (2026-11-25)
+const startBtn=i=>isPending(i)&&!queueOn()?`<button class="snow" title="Claude builds this page now, then stops" onclick="event.stopPropagation();startNow(${i.subitem_id})">Start now</button>`:"";
 async function startNow(sid){const it=((D.state||{}).items||[]).find(i=>i.subitem_id==sid);if(!it)return toast("Page not found");if(!usageOk("Building this page"))return;
  if(JOBST&&JOBST.running&&JOBST.claude)return toast(JOBST.action==="start"?"Start is running - this page is in its queue (or press Stop, then Start now)":"Claude is already working - wait or press Stop");
  if(!confirm(`Start this page now?
@@ -1148,15 +1158,18 @@ async function memCheck(btn){const t=btn.textContent;btn.textContent="Claude is 
 document.addEventListener("click",e=>{const n=e.target.closest&&e.target.closest(".nn");if(n&&innerWidth<=700&&!e.target.closest("a,button"))n.classList.toggle("open")});   // phone: tap the Now box to unfold it
 async function run(action){
  if(action==="start"&&!usageOk("The Start run"))return;
- if(action==="start"&&!confirm("Start the automation?\n\nClaude Code will work the queue in the background (revisions first, then Assigned MLPs) until it is empty or you press Stop."))return;
+ if(action==="start"&&!confirm("Start the automation?\n\nClaude Code works the queue in the background, one page per run (revisions first, then Assigned MLPs). Between pages it checks monday, so a new revision goes next. It stops when the queue is empty or you press Stop."))return;
  if(action==="refresh"&&!(JOBST&&JOBST.direct)&&!confirm("Refresh from monday now?\n\nNo monday token yet, so Claude Code does the refresh (uses tokens, a few minutes)."))return;
  const r=await fetch("/api/run",{method:"POST",body:JSON.stringify({action})});const j=await r.json();toast(j.ok?j.msg:j.error);poll();load()}
 function postCard(i,ns,post){const m=ns.match(/Upload (\d+) images?/),n=m?+m[1]:0,pk=(D.packs||{})[String(i.subitem_id)],sid=i.subitem_id;
  const files=pk?pk.files:[];
  const fields=files.length?`paste ${files.filter(f=>["HTML","CSS","JS"].includes(f.label)).length>1?"the "+files.filter(f=>["HTML","CSS","JS"].includes(f.label)).length+" CMS fields":"the page"}`:"paste the CMS fields";
- const head=`${n?`Upload ${n} image${n>1?"s":""} · `:"No new images · "}${fields}`;
+ // revision: say which CMS fields changed (user, 2026-11-25: "if you change the HTML indicate it")
+ const code=files.filter(f=>["HTML","CSS","JS"].includes(f.label)),chg=files.filter(f=>f.state==="changed"||f.state==="new");
+ const rfields=pk&&pk.cms?(chg.length?`paste ${chg.map(f=>f.label).join(" + ")}${files.some(f=>f.state==="same")?` <span class="grey">(${files.filter(f=>f.state==="same").map(f=>f.label).join(", ")} no change)</span>`:""}`:"no CMS change"):null;
+ const head=`${n?`Upload ${n} image${n>1?"s":""} · `:"No new images · "}${rfields||fields}`;
  const main=f=>["HTML","CSS","JS"].includes(f.label)||files.length<=2;
- const cpb=f=>`<button class="cpb" onclick="event.stopPropagation();copyPack(${sid},${esc(JSON.stringify(f.name))},this)" title="Copy ${esc(f.name)} (${f.kb} KB) to paste into the CMS">Copy ${esc(f.label)}</button>`;
+ const cpb=f=>`<button class="cpb${f.state==="same"?" same":""}" onclick="event.stopPropagation();copyPack(${sid},${esc(JSON.stringify(f.name))},this)" title="${f.state==="same"?"No change in this revision - no need to paste. ":f.state==="changed"?`Changed in this revision (${f.lines} lines). `:""}Copy ${esc(f.name)} (${f.kb} KB) to paste into the CMS">Copy ${esc(f.label)}${f.state==="changed"||f.state==="new"?" •":""}</button>`;
  const copies=files.filter(main).map(cpb).join("");
  const more=files.filter(f=>!main(f)).map(cpb).join("")
   +(pk&&pk.note?((pk.notes||[]).length?pk.notes:[""]).map(n=>`<button class="cpb note" onclick="event.stopPropagation();copyPack(${sid},'@note${n?":"+n:""}',this)" title="Copy the monday update${n?" for the "+n+" subitem":""}${pk.ba?" - attach the "+pk.ba+" before/after images from 4-before-after":""}">Copy note${n?" · "+(n==="Final Mobile Check"?"Mobile":n):""}</button>`).join(""):"");
@@ -1305,7 +1318,7 @@ function renderView(){
     last=i.dealer;gshut=false;h+=withDealer(sg.compact?rowCompact(i):rowFull(i),i);continue}
    if(i.dealer!==last){const g=part.filter(r=>r.dealer===i.dealer),n=g.length;
     // big batches (e.g. 11 city pages) start folded in the ready sections so the list stays short
-    const gk=sg.k+"|"+i.dealer;gshut=sg.k.startsWith("post")&&n>4&&(GRP_OPEN[gk]===undefined?true:!GRP_OPEN[gk]);h+=`<tr class="dealer"><td colspan="5"><span class="dlink" onclick="openDealer(${esc(JSON.stringify(i.dealer))})" title="Dealer card: fonts, links, colours, pages">${esc(i.dealer)}</span>${ccBtn({dealer:i.dealer})}${dlinks(i.dealer)}<span class="cnt">${n} page${n>1?"s":""}</span>${batchBtns(i.dealer)}${sg.k.startsWith("post")&&n>4?`<button class="grp-tg" onclick="toggleGrp(${esc(JSON.stringify(gk))},${gshut})">${gshut?"Show "+n+" pages ▸":"Fold ▾"}</button>`:""}</td></tr>`;last=i.dealer}
+    const gk=sg.k+"|"+i.dealer;gshut=sg.k.startsWith("post")&&n>4&&(GRP_OPEN[gk]===undefined?true:!GRP_OPEN[gk]);h+=`<tr class="dealer"><td colspan="5"><span class="dlink" onclick="openDealer(${esc(JSON.stringify(i.dealer))})" title="Dealer card: fonts, links, colours, pages">${esc(i.dealer)}</span>${dlinks(i.dealer)}<span class="cnt">${n} page${n>1?"s":""}</span>${batchBtns(i.dealer)}${sg.k.startsWith("post")&&n>4?`<button class="grp-tg" onclick="toggleGrp(${esc(JSON.stringify(gk))},${gshut})">${gshut?"Show "+n+" pages ▸":"Fold ▾"}</button>`:""}</td></tr>`;last=i.dealer}
    if(gshut)continue;
    h+=sg.compact?rowCompact(i):rowFull(i);
   }
@@ -1458,7 +1471,7 @@ async function openItem(sid,keep){
     d.folder?`<button class="lk" onclick="openF(${sid},'folder')">Open folder</button>`:"",
     d.to_post&&!(post&&!isPosted(i))?`<button class="lk" onclick="openF(${sid},'topost')">Upload pack</button>`:"",
     post&&isPosted(i)?`<button class="lk" onclick="markPosted(${sid},false)">Undo posted</button>`:"",
-    `<button class="lk" onclick="openClaude(${sid})" title="VS Code opens this page's folder with a Claude Code chat - the page details are typed in">Open in Claude Code</button>`,
+    `<button class="lk" onclick="openClaude(${sid})" title="Open this page's folder in VS Code">Open in VS Code</button>`,
     `<button class="lk" onclick="vsc(${esc(JSON.stringify(i.dealer))},'${i.type||"MLP"}')">Dealer in VS Code</button>`,
     i.live_url?`<a class="lk" href="${esc(i.live_url)}" target="_blank">Live page</a>`:"",
     `<a class="lk" href="${esc(i.monday_url)}" target="_blank">monday</a>`].filter(Boolean).join("");
@@ -1503,17 +1516,18 @@ const HOWTO=[
 <li><b>Ready to post</b> - Claude is done; you upload and post.</li>
 <li><b>Claude is working on it</b> - leave it; the Now box shows the step.</li>
 <li><b>Needs you</b> - something only you can do (a question, images, a link).</li>
-<li><b>Not started yet</b> - in Claude's queue. Green <i>Start now</i> builds that one page right away.</li>
+<li><b>Not started yet</b> - in Claude's queue. Green <i>Start now</i> builds that one page right away. While the Start queue is running the button hides and the line says "nothing to press" - Claude gets to it by itself.</li>
 <li><b>With QA</b> and <b>On hold</b> - nothing to do; folded to keep the list short.</li></ul>
 <p>Click a stage title to fold it. <i>Color key</i> (above the list) explains the monday status colours. Click a <b>dealer name</b> for its card (fonts, links, colours, pages).</p>`],
 ["Buttons that start Claude",`<ul>
-<li><b>Start</b> (header) - Claude works the queue in the background until it is empty. <b>Stop</b> halts it at once.</li>
+<li><b>Start</b> (header) - Claude works the queue in the background, <b>one page per run</b>: when a page is done it checks monday (a new revision goes next) and starts the next page by itself, until the queue is empty. City pages of one dealer go together (sample first, then the rest). If the queue is empty, Claude isn't started at all. <b>Stop</b> halts it at once.</li>
 <li><b>Start now</b> (green, on a pending page) - builds just that page, then stops.</li>
 <li><b>Fix it now</b> (red, on a revision) - fixes just that revision: every QA point, QA check, Final mobile check, before/after images, upload pack, note.</li>
-<li><b>&gt;_ icon</b> (on every row) or <b>Open in Claude Code</b> - opens VS Code in that page's folder with a Claude chat; the page name is typed in, you add what you want. You can paste screenshots there.</li></ul>
+<li><b>&gt;_ icon</b> (on every page row) or <b>Open in VS Code</b> - opens that page's own folder in VS Code (not the dealer folder). A page that isn't built yet has no folder, so you get a message instead.</li></ul>
 <p>Only one Claude job runs at a time. Near your Claude limit (90%) the tracker asks before starting.</p>`],
 ["Posting a page",`<ol>
 <li>On a Ready to post row, open <b>Copy · Preview · Upload pack</b>.</li>
+<li>On a <b>revision</b> the row says which CMS fields changed, e.g. <i>paste CSS (HTML, JS no change)</i>. Changed fields have a • on their Copy button; unchanged ones are faded - no need to paste them. The same "CMS: ..." line is in Claude's revision note and the pack's README.</li>
 <li><b>Upload pack</b> opens the to-post folder: upload the images one batch folder at a time. If one fails, delete the half-made entry first, then upload it alone.</li>
 <li><b>Copy HTML / CSS / JS</b> and paste each into the CMS field with the same name. <b>Preview</b> shows the page as built.</li>
 <li><b>Copy note</b> - the monday update to post on the subitem.</li>
@@ -1544,11 +1558,13 @@ const HOWTO=[
 <p><b>Search</b> (magnifier) finds a dealer, page or note.</p>`],
 ["Auto-update and pop-ups",`<ul>
 <li>During your shift the tracker checks monday every few minutes by itself. New pages assigned to you appear within minutes. Outside your shift it still checks every 30 minutes (while the PC is on), so pages assigned in the morning are already there when you start.</li>
+<li><b>Red bar at the top</b> = the monday update is failing, so what you see may be out of date. You also get one pop-up. The tracker keeps trying every few minutes and the bar goes away by itself once an update works.</li>
 <li>While Claude is running, new assignments still give a pop-up right away; they show in the list as soon as the run ends.</li>
 <li>An amber line "<i>N assigned tasks on monday the tracker couldn't place</i>" means monday gave you something the tracker doesn't treat as a page. Open it and check; <i>Got it</i> hides it.</li>
 <li>Several city pages under one monday item (e.g. 6 cities)? Press <b>Build N as a batch</b> on the dealer row: Claude builds the first one as a sample. Check it, then press <b>Copy sample to the other N</b> - Claude makes the rest from it with their own content docs. If one of them is already built, the dealer row offers <b>Copy &lt;that page&gt; to the other N</b> straight away.</li>
 <li>Tracker looks behind monday? Press <b>Refresh</b> (top right). It re-reads everything from monday right away, any time of day (about a minute; the arrow spins while it works).</li>
 <li>Windows/Mac pop-ups tell you about revisions, new pages, approvals, due dates and when a Claude run finishes. Turn each one on or off under <i>Auto-update and pop-ups</i>.</li>
+<li>Pop-ups only come while the tracker is open in a browser (a tab in the background counts). When it's closed you get none; the tracker still shows everything the next time you open it. Untick <i>Only send pop-ups while the tracker is open</i> to get them all the time.</li>
 <li>The tracker only <b>reads</b> monday - it never posts or changes anything there.</li></ul>`],
 ["Settings on this page",`<ul>
 <li><b>monday connection</b> - your own monday API token (monday: profile picture &gt; Developers &gt; My access tokens).</li>
@@ -1602,7 +1618,7 @@ async function settingsView(){
    <label>When<select data-k="watch_when">${opt("shift",c.watch_when,"Only during my shift")}${opt("always",c.watch_when,"All the time")}</select></label>
   </div>
   <div class="sgrid" style="margin-top:12px">
-   ${[["alert_revision","Pop-up when QA asks for a revision"],["alert_new","Pop-up when a new page is assigned to me"],["alert_approved","Pop-up when a page is approved"],["alert_due","Pop-up when a page is due today or tomorrow"],["fix_from_popup","\"Fix it now\" button on revision pop-ups (asks before Claude starts)"],["alert_claude_done","Pop-up when Claude finishes or stops (Start / Fix it now)"],["auto_qa","Run the QA check by itself on ready pages that changed (one at a time, never while Claude works)"]].map(([k,l])=>`<label style="flex-direction:row;align-items:center;gap:8px;font-weight:600"><input type="checkbox" data-k="${k}" ${c[k]?"checked":""}> ${l}</label>`).join("")}
+   ${[["alert_revision","Pop-up when QA asks for a revision"],["alert_new","Pop-up when a new page is assigned to me"],["alert_approved","Pop-up when a page is approved"],["alert_due","Pop-up when a page is due today or tomorrow"],["fix_from_popup","\"Fix it now\" button on revision pop-ups (asks before Claude starts)"],["alert_claude_done","Pop-up when Claude finishes or stops (Start / Fix it now)"],["popups_only_when_open","Only send pop-ups while the tracker is open in a browser"],["auto_qa","Run the QA check by itself on ready pages that changed (one at a time, never while Claude works)"]].map(([k,l])=>`<label style="flex-direction:row;align-items:center;gap:8px;font-weight:600"><input type="checkbox" data-k="${k}" ${c[k]?"checked":""}> ${l}</label>`).join("")}
   </div>
   <div class="row"><button class="sbtn" onclick="saveSettings()">Save settings</button><button class="sbtn alt" onclick="sAct('/api/test-popup')">Send a test pop-up</button><button class="sbtn alt" onclick="sAct('/api/check-now')">Check monday now</button></div>
  </div>
@@ -1627,7 +1643,7 @@ async function settingsView(){
  </div>
  <div class="sbox"><h2>My build memory</h2>
   <p class="hint">Plug your own Claude memory (how YOU build pages) into the automation. Find it, keep the build files ticked,
-  Save - every Start, Fix it now, Start now and "Open in Claude Code" chat then follows it. These are links, so whatever your
+  Save - every Start, Fix it now and Start now run then follows it. These are links, so whatever your
   Claude learns later is used too.</p>
   <div class="row"><button class="sbtn" onclick="memScan()">Find my Claude memory</button><span class="hint" id="memstat" style="margin:0"></span></div>
   <div id="memlist"></div>
@@ -1707,12 +1723,12 @@ async function testToken(){$("#tokstate").textContent="Checking with monday…";
  $("#tokstate").textContent=j.ok?j.msg:j.error;$("#tokstate").className="tok "+(j.ok?"ok":"bad")}
 async function edit(sid,field,value){const r=await fetch("/api/edit",{method:"POST",body:JSON.stringify({sid,field,value})});const j=await r.json();toast(j.ok?"Saved":j.error);load()}
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeItem();$("#zoom").style.display="none"}});
-// ---- Open in Claude Code (2026-11-19, user chose A: replaces the terminal panel). The server opens the page folder in
-// VS Code; then the vscode:// link opens a Claude Code chat there with the page details typed in (you add the task).
+// ---- Open in VS Code (2026-11-24, was "Open in Claude Code"): the server opens only the page's own folder in VS Code.
+// No Claude Code chat link, no dealer folder (user: "the project specifically, not the parent folder").
 async function openClaude(t){
  const j=await (await fetch("/api/claude-open",{method:"POST",body:JSON.stringify(typeof t==="object"?t:{sid:t})})).json();
  if(j.error)return toast(j.error);
- location.href=j.uri;toast(j.msg)}   // the browser may ask once to allow opening VS Code - tick "Always allow"
+ toast(j.msg)}
 
 // ---------------------------------------------------------------- theme (auto / light / dark), remembered in this browser
 function applyTheme(){let t="auto";try{t=localStorage.getItem("mlpTheme")||"auto"}catch(e){}
@@ -1724,7 +1740,7 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change",applyTheme)
 async function openDealer(name){openSid=null;const d=await (await fetch("/api/dealer?name="+encodeURIComponent(name))).json();
  const link=(u,t)=>u?`<a href="${esc(u)}" target="_blank">${esc(t||u)}</a>`:"-";
  let h=`<div class="hd"><button class="x" onclick="closeItem()">&times;</button><h2>${esc(d.dealer)}</h2><div class="small" style="color:#fff;opacity:.8">${esc(d.platform||"platform unknown")}</div>
-  <div class="btns">${d.cms_url?`<a class="btn" href="${esc(d.cms_url)}" target="_blank" rel="noopener" title="The dealer's CMS (backend)">Open CMS</a>`:""}${d.cred_url?`<a class="btn" href="${esc(d.cred_url)}" target="_blank" rel="noopener" title="monday Dealer Login and Setup - the username and password are there">Credentials</a>`:""}<button class="btn" onclick="openClaude({dealer:${esc(JSON.stringify(d.dealer))}})" title="VS Code opens the dealer folder with a Claude Code chat - its pages are typed in">Open in Claude Code</button>${d.folder?`<button class="btn" onclick="vsc(${esc(JSON.stringify(d.dealer))},'MLP')">MLP folder in VS Code</button>`:""}${d.city_folder?`<button class="btn" onclick="vsc(${esc(JSON.stringify(d.dealer))},'City Page')">City pages in VS Code</button>`:""}</div></div><div class="bd">`;
+  <div class="btns">${d.cms_url?`<a class="btn" href="${esc(d.cms_url)}" target="_blank" rel="noopener" title="The dealer's CMS (backend)">Open CMS</a>`:""}${d.cred_url?`<a class="btn" href="${esc(d.cred_url)}" target="_blank" rel="noopener" title="monday Dealer Login and Setup - the username and password are there">Credentials</a>`:""}${d.folder?`<button class="btn" onclick="vsc(${esc(JSON.stringify(d.dealer))},'MLP')">MLP folder in VS Code</button>`:""}${d.city_folder?`<button class="btn" onclick="vsc(${esc(JSON.stringify(d.dealer))},'City Page')">City pages in VS Code</button>`:""}</div></div><div class="bd">`;
  h+=`<section><h3>Brand</h3><div class="kv"><b>Fonts</b><div>${d.fonts.length?d.fonts.map(esc).join(", "):"-"}</div>
   <b>Colours</b><div>${d.colours.length?d.colours.map(c=>`<span class="sw"><i style="background:${esc(c)}"></i>${esc(c)}</span>`).join(""):"-"}</div>
   <b>Image URL pattern</b><div>${d.cdn?`${esc(d.cdn)}<button class="cpy" onclick="cp(${esc(JSON.stringify(d.cdn))})">Copy</button>`:"-"}</div>
@@ -1816,9 +1832,12 @@ async function blogsView(){
  // a blog only on monday (no folder yet)
  const mrow=x=>`<div class="bline${x.turn?" bturn":""}"><a class="bln" href="${esc(x.url)}" target="_blank" rel="noopener" title="Open on monday${x.writer?" · writer: "+esc(x.writer):""}">${esc(x.name)}</a>
   <div class="bmeta">${chip(x.status,x.turn,x.done)}${when(x)}${ext(x.doc,"Doc","Open the Google Doc (source)")}${ext(x.live,"Live","Open the live blog")}</div>
-  ${x.turn?`<div class="bm"><a class="mbtn" href="${esc(x.url)}" target="_blank" rel="noopener">monday</a><button class="bbuild" onclick="blogBuild(${J(x.url)},${J(x.name)},this)" title="Claude builds it from the Google Doc: folder, images (WebP), preview.html, cms.html, then the blog check">Build it</button></div>`:""}</div>`;
+  ${x.turn&&x.noauto?`<div class="bm"><a class="mbtn" href="${esc(x.url)}" target="_blank" rel="noopener">monday</a><span class="bnoauto" title="This dealer's CMS (DealerOn / MotiveHQ) is not compatible with automation - build and post this blog by hand">build by hand</span></div>`:x.turn?`<div class="bm"><a class="mbtn" href="${esc(x.url)}" target="_blank" rel="noopener">monday</a><button class="bbuild" onclick="blogBuild(${J(x.url)},${J(x.name)},this)" title="Claude builds it from the Google Doc: folder, images (WebP), preview.html, cms.html, then the blog check">Build it</button></div>`:""}</div>`;
  if(BFILT==="turn"&&!r.your_turn&&!ql)BFILT="all";const F=BFILT;
- const ds=r.dealers.map((d,k)=>({...d,no:k+1,b:d.blogs.filter(b=>hit(d.name,b.title)&&(F!=="turn"||b.turn)),u:d.upcoming.filter(x=>hit(d.name,x.name)&&(F!=="turn"||x.turn)),p:F==="all"?d.published.filter(x=>hit(d.name,x.name)):[]}))
+ // sorted by CMS (user, 2026-11-25: "sort the blogs base on their CMS"): biggest CMS group first, "CMS not set" last
+ const cmsN={};r.dealers.forEach(d=>{const c=d.cms||"";cmsN[c]=(cmsN[c]||0)+1});
+ const cmsRank=c=>c?-cmsN[c]:1;
+ const ds=[...r.dealers].sort((a,b)=>cmsRank(a.cms||"")-cmsRank(b.cms||"")||(a.cms||"").localeCompare(b.cms||"")).map((d,k)=>({...d,no:k+1,b:d.blogs.filter(b=>hit(d.name,b.title)&&(F!=="turn"||b.turn)),u:d.upcoming.filter(x=>hit(d.name,x.name)&&(F!=="turn"||x.turn)).map(x=>d.auto===false?{...x,noauto:1}:x),p:F==="all"?d.published.filter(x=>hit(d.name,x.name)):[]}))
   .filter(d=>F==="turn"?d.b.length||d.u.length:F==="built"?d.b.length:(!ql||d.b.length||d.u.length||d.p.length));
  const soon=ymd(new Date(Date.now()+14*864e5));
  const card=d=>{const turn=d.u.filter(x=>x.turn),upAll=d.u.filter(x=>!x.turn),up=ql?upAll:upAll.filter(x=>!x.date||x.date<=soon),later=ql?[]:upAll.filter(x=>x.date&&x.date>soon),MAX=4;
@@ -1838,10 +1857,19 @@ async function blogsView(){
  if(!r.found)h+=`<div class="card">The blogs folder was not found: ${esc(r.folder)}. Set "folder" in blog_dealers.json.</div>`;
  const tn=ds.map(d=>({d,n:d.u.filter(x=>x.turn).length+d.b.filter(b=>b.turn).length})).filter(x=>x.n);
  if(tn.length&&F!=="turn")h+=`<div class="bturnbar"><b>Your turn:</b> ${tn.map(x=>`<a href="#" onclick="event.preventDefault();const e=document.getElementById('bd-${x.d.no}');e.scrollIntoView({behavior:'smooth',block:'start'});e.classList.add('bflash');setTimeout(()=>e.classList.remove('bflash'),1600)">${esc(x.d.name)}${x.n>1?" ("+x.n+")":""}</a>`).join(" · ")}</div>`;
- h+=`<div class="bgrid">${ds.map(card).join("")}</div>`;
+ const grp=[];ds.forEach(d=>{const c=d.cms||"";const g=grp.find(x=>x.c===c);g?g.ds.push(d):grp.push({c,ds:[d]})});
+ // Start per CMS (user, 2026-11-26): Claude builds every your-turn blog of that CMS that has no folder yet, one per run
+ const bq=blogQ(),busy=!!(JOBST&&JOBST.running);
+ const toBuild=c=>r.dealers.filter(d=>(d.cms||"")===c).reduce((n,d)=>n+d.upcoming.filter(x=>x.turn&&x.doc).length,0);
+ const gStart=c=>{if(!c)return"";if(r.dealers.some(d=>(d.cms||"")===c&&d.auto===false))return`<span class="bnoauto" title="${esc(c)} is not compatible with automation: these blogs stay on the tracker, but Claude does not build them - build and post them by hand">not compatible with automation</span>`;if(bq&&bq.cms===c)return`<span class="bgstart on" title="Claude is building these blogs one by one - press Stop in the header to stop">Building ${bq.pos} of ${bq.total}…</span>`;
+  const n=toBuild(c);if(!n)return`<span class="bgnone" title="No ${esc(c)} blog is your turn without a folder">nothing to build</span>`;
+  return `<button class="bgstart" ${busy?`disabled title="Claude is busy - wait for it or press Stop"`:`title="Claude builds the ${n} ${esc(c)} blog(s) that are your turn and have no folder yet, one at a time (oldest publication date first)"`} onclick="blogCmsStart(${J(c)},${n})">▶ Start (${n})</button>`};
+ h+=grp.map(g=>`<div class="bgroup"><span title="${g.c?"CMS from monday Dealer Login and Setup":"The CMS column is empty on monday Dealer Login and Setup"}">${g.c?esc(g.c):"CMS not set on monday"}</span> <span class="ct">${g.ds.length}</span>${gStart(g.c)}</div><div class="bgrid">${g.ds.map(card).join("")}</div>`).join("");
  if(!ds.length)h+=`<div class="card small">${ql?"Nothing matches the search.":F==="turn"?"Nothing is your turn right now - blogs show here when monday moves them to "+esc(r.turn_labels.join(", "))+".":"No built blogs yet."}</div>`;
  if(oth.length&&F==="all")h+=`<details class="card" style="margin-top:12px"${ql?" open":""}><summary><b>Other dealers' blogs</b> <span class="small">(${oth.length}) - folders for dealers not on your list</span></summary><div style="margin-top:8px">${oth.map(b=>built({...b,title:b.title+(b.site?" — "+b.site:"")})).join("")}</div></details>`;
  $("#view").innerHTML=h}
+async function blogCmsStart(cms,n){if(!confirm(`Claude builds the ${n} ${cms} blog${n>1?"s":""} that are your turn, one at a time (folder, images, preview.html, cms.html, blog check). Start?`))return;
+ const j=await (await fetch("/api/run",{method:"POST",body:JSON.stringify({action:"blogcms",sid:cms})})).json();toast(j.ok?j.msg:j.error,6000);poll()}
 async function blogBuild(url,name,btn){if(!confirm("Claude builds this blog from its Google Doc (folder, images, preview.html, cms.html, blog check). Start? - "+name))return;btn.disabled=true;
  const j=await (await fetch("/api/run",{method:"POST",body:JSON.stringify({action:"blog",sid:url})})).json();toast(j.ok?j.msg:j.error,5000);btn.disabled=false;poll()}
 // SEO review tab (user, 2026-11-17: "add a tab for SEO review when there is a revision about the page").
@@ -2091,7 +2119,7 @@ function suRender(){const s=SU,c=$("#setupcard");
   const allOk=t.claude&&t.vscode&&t.node&&t.toolkit_qa;
   b=`<h2>🧰 Tools check</h2><p>These are what Claude uses to build and check pages.</p>
   <ul class="sutools">${line(t.claude,"Claude Code","builds and fixes the pages (Start, Start now, Fix it now)","run SETUP again, then open Claude Code once and sign in")}
-  ${line(t.vscode,"VS Code","opens a page's folder and Claude chats","run SETUP again or install VS Code")}
+  ${line(t.vscode,"VS Code","opens a page's folder","run SETUP again or install VS Code")}
   ${line(t.node,"Node.js","runs the QA check and the phone check","run SETUP again or install Node.js")}
   ${line(t.toolkit_qa,"QA tools","the checks in the MLP toolkit","check the toolkit folder in the Folders step")}</ul>
   ${allOk?'<div class="suok">✓ Everything is ready.</div>':'<p class="small">You can finish now - a button that needs a missing tool will tell you. Fix it, then press <b>Check again</b>.</p>'}
@@ -2121,7 +2149,7 @@ const GUIDE=[
  ["🧭","A page's journey",`<div class="gflow"><span>🤖 Claude builds</span>→<span>👤 You check &amp; post</span>→<span>👤 monday: Waiting for Review</span>→<span>🔍 QA checks</span>→<span>✅ Approved</span></div>
   <p>If QA asks for changes, the page goes back to <b>🤖 Claude's turn</b> as a revision, then to you to post again.</p>
   <p>Every page shows <b>whose turn</b> it is. The <b>Dashboard</b> shows <b>Do this next</b> - start there every shift.</p>`],
- ["▶️","The four buttons",`<table class="gtab"><tr><td><b>Start</b><small>top bar</small></td><td>Claude works the whole queue - revisions first, then new pages - and stops when it's empty.</td></tr>
+ ["▶️","The four buttons",`<table class="gtab"><tr><td><b>Start</b><small>top bar</small></td><td>Claude works the whole queue - revisions first, then new pages - one page per run, and stops when it's empty.</td></tr>
   <tr><td><b>Start now</b><small>on a page</small></td><td>Claude builds just that one page.</td></tr><tr><td><b>Fix it now</b><small>on a revision</small></td><td>Claude fixes just that revision.</td></tr>
   <tr><td><b>Stop</b><small>top bar</small></td><td>Stops any Claude run right away.</td></tr></table>
   <p class="gtip">One Claude run at a time. A page takes about 10-40 minutes. It uses your Claude plan - the % is in the <b>⋯</b> menu; at the limit Claude pauses until it resets.</p>`],

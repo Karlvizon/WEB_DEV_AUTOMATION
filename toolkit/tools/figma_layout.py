@@ -132,7 +132,8 @@ def frame_layout(fr):
         if t == "TEXT":
             s = re.sub(r"\s+", " ", n.get("characters", "")).strip()
             if s:
-                texts.append({"t": s[:120], "box": box, "anc": anc, "id": n["id"], "size": (n.get("style") or {}).get("fontSize")})
+                texts.append({"t": s[:120], "box": box, "anc": anc, "id": n["id"], "size": (n.get("style") or {}).get("fontSize"),
+                              "font": (n.get("style") or {}).get("fontFamily")})
                 boxes.append((box, n["id"]))
             return
         if t in SHAPES and (visible_paint(n.get("fills")) or visible_paint(n.get("strokes"))):
@@ -160,7 +161,7 @@ def frame_layout(fr):
             if bx <= x and by <= y and bx + bw >= x + w and by + bh >= y + h:   # a box behind the text (not a parent in Figma)
                 continue
             best = by + bh if best is None else max(best, by + bh)
-        out.append({"t": t["t"], "x": x, "y": y, "w": w, "h": h, "size": t["size"],
+        out.append({"t": t["t"], "x": x, "y": y, "w": w, "h": h, "size": t["size"], "font": t.get("font"),
                     "gap": None if best is None else round(y - best, 1)})
     return {"name": fr.get("name"), "id": fr["id"], "w": W, "h": fr["absoluteBoundingBox"]["height"], "texts": out}
 
@@ -232,6 +233,8 @@ def main():
            "saved": time.strftime("%Y-%m-%d %H:%M"), "desktop": frame_layout(desk)}
     if mob:
         res["mobile"] = frame_layout(mob)
+    # the Figma's fonts (user 2026-11-25: "always use the font that the figma design uses") - qa_sweep.js checks the page against them
+    res["fonts"] = sorted({t["font"] for fr in (res["desktop"], res.get("mobile") or {"texts": []}) for t in fr["texts"] if t.get("font")})
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     print("OK  saved figma/layout.json - desktop %s (%d texts)%s" % (

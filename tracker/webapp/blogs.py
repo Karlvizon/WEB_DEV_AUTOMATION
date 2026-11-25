@@ -160,11 +160,39 @@ def _find(title, dealer, items):
     return best if score >= 0.75 else None
 
 
+def cms_of(d):
+    """The dealer's CMS (Dealer Inspire, DDC, Apollo...): "cms" in blog_dealers.json, else the monday Dealer Login and
+    Setup list (../cms_directory.json) matched on the name or an alias. Blogs tab groups the dealers by it (2026-11-25)."""
+    if d.get("cms"):
+        return d["cms"]
+    try:
+        cms = json.loads((HERE.parent / "cms_directory.json").read_text(encoding="utf-8")).get("cms") or {}
+    except (OSError, ValueError):
+        return ""
+    norm = lambda s: frozenset(_key(s.replace("Mercedes-Benz", "Mercedes Benz")).split()) - {"of", "the"}
+    have = {norm(k): v for k, v in cms.items() if v}
+    for n in [d["name"]] + list(d.get("aliases") or []):
+        if norm(n) in have:
+            return have[norm(n)]
+    return ""
+
+
+# user, 2026-11-26: "if there is a blog for the CMS of dealer on and Motive put them still on the tracker but indicate that it
+# is not compatible for automation or building the blog post" -> listed as usual, no Build it / Start for these CMSs
+NO_AUTO = ("dealeron", "motive")
+
+
+def auto_ok(cms):
+    return not any(k in (cms or "").lower().replace(" ", "") for k in NO_AUTO)
+
+
 def blogs_by_dealer(fresh=False):
     c = config()
     root = Path(c["folder"])
     dealers = c["dealers"]
-    out = [{"name": d["name"], "cms": d.get("cms", ""), "blogs": []} for d in dealers]
+    out = [{"name": d["name"], "cms": cms_of(d), "blogs": []} for d in dealers]
+    for d in out:
+        d["auto"] = auto_ok(d["cms"])
     other = []
     if root.is_dir():
         for p in sorted(root.iterdir(), key=lambda p: p.name.lower()):
@@ -336,9 +364,9 @@ def watch_loop(features, settings):
             new = [x for x in now if x["url"] not in set(seen.get("urls", []))]
             if len(new) == 1:
                 x = new[0]
-                features.toast(f"Blog ready for you: {x['dealer']}", x["name"] + (" - built, ready to post" if x["built"] else " - click Build it"), f"blogs={x['no']}")
+                features.toast(f"Blog ready: {x['dealer']}", "Built - ready to post" if x["built"] else "Click Build it", f"blogs={x['no']}")
             elif new:
-                features.toast(f"{len(new)} blogs ready for you", "; ".join(f"{x['dealer']}: {x['name']}" for x in new)[:280], "blogs")
+                features.toast(f"{len(new)} blogs ready", ", ".join(sorted({x['dealer'] for x in new})), "blogs")
         except Exception:
             pass
 
@@ -357,6 +385,9 @@ def build_prompt(url):
     if not x:
         return None, None
     c = config()
+    d = next((d for d in c["dealers"] if d["name"] == x["dealer"]), None)
+    if d and not auto_ok(cms_of(d)):
+        return f"{x['dealer']} - {x['name']}", ""   # DealerOn / MotiveHQ: not built by Claude
     folder = Path(c["folder"]) / folder_name(x["name"])
     home = Path.home()
     same = [p.name for p in Path(c["folder"]).iterdir() if p.is_dir()] if Path(c["folder"]).is_dir() else []

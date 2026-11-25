@@ -12,8 +12,9 @@ async function sweep(b, dir) {
   const out = [];
   // Figma design measurements: saved once per page with the user's Figma key (Settings > Figma connection)
   const lay = path.join(dir, 'figma', 'layout.json'), fkey = path.join(process.env.APPDATA || '', 'MLP Tracker', 'figma_token.txt');
-  if (!fs.existsSync(lay) && (process.env.FIGMA_TOKEN || fs.existsSync(fkey))) {
-    const r = require('child_process').spawnSync('python', ['-I', path.join(__dirname, '..', 'figma_layout.py'), dir], { encoding: 'utf8', timeout: 120000, windowsHide: true });
+  // re-save once when an older layout.json has no "fonts" list (Figma-font check, 2026-11-25)
+  if ((!fs.existsSync(lay) || !/"fonts"\s*:/.test(fs.readFileSync(lay, 'utf8'))) && (process.env.FIGMA_TOKEN || fs.existsSync(fkey))) {
+    const r = require('child_process').spawnSync('python', ['-I', path.join(__dirname, '..', 'figma_layout.py'), dir].concat(fs.existsSync(lay) ? ['--force'] : []), { encoding: 'utf8', timeout: 120000, windowsHide: true });
     const msg = ((r.stdout || '') + (r.stderr || '')).trim().split(/\r?\n/).pop();
     if (msg && !msg.startsWith('OK')) out.push('INFO Figma measurements: ' + msg.replace(/^SKIP\s*/, ''));
   }
@@ -38,6 +39,19 @@ async function sweep(b, dir) {
       const wrap = document.querySelector('[class$="-wrap"]'); if (!wrap) return { err: 'no wrapper' };
       const pre = wrap.className.split(' ').find((c) => c.endsWith('-wrap')).replace(/-wrap$/, '');
       const q = (s) => document.querySelector(s); const R = (e) => e.getBoundingClientRect(); const res = { pre };
+      // (R)/TM = the size on Mercedes-Benz of Alexandria's live GLS page (user 2026-11-25: "gets the size of the trademark symbol
+      // here and implement it ... use it for the future pages"): drawn symbol width = about HALF the text size (GLS: 11.9px on 24px
+      // text, 7.9px on 16px, 18.7px on 40px headings = 0.47-0.50). OK 0.42-0.58. Every symbol, wrapped in a span or typed in the text.
+      { res.tm = { n: 0, bad: [], loose: 0 };
+        const tw = document.createTreeWalker(wrap, NodeFilter.SHOW_TEXT); let tn;
+        while ((tn = tw.nextNode())) { const v = tn.nodeValue || ''; const el = tn.parentElement;
+          if (!/[®™℠]/.test(v) || !el || !el.offsetParent || el.closest('script,style')) continue;
+          const host = v.trim().length === 1 ? el.parentElement : el, pf = parseFloat(getComputedStyle(host).fontSize);
+          for (let k = 0; k < v.length; k++) { if (v[k] !== '®') continue; res.tm.n++;   // (R) only - a TM is wider by design
+            const ecs = getComputedStyle(el); const cv = (window.__tmcv = window.__tmcv || document.createElement('canvas').getContext('2d'));
+            cv.font = `${ecs.fontStyle} ${ecs.fontWeight} ${ecs.fontSize} ${ecs.fontFamily}`;   // the symbol alone: kerning ("iPhone®") must not count
+            const gw = cv.measureText('®').width, ratio = gw / pf;
+            if (ratio < 0.42 || ratio > 0.58) res.tm.bad.push(`${(host.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 28)}… ${gw.toFixed(1)}px on ${Math.round(pf)}px text = ${ratio.toFixed(2)} (${ratio < 0.42 ? 'too small' : 'too big'})`); } } }
       const seo = q(`.${pre}-seo`);
       if (seo) {
         const first = seo.firstElementChild; const prev = seo.previousElementSibling;
@@ -66,6 +80,26 @@ async function sweep(b, dir) {
               res.touch.push(`${kids[k - 1].className.split(' ')[0]} -> ${kids[k].className.split(' ')[0]}`); }
           if (d < 3) kids.forEach((k) => walk(k, d + 1)); };
         walk(wrap, 0);
+        // DISCLAIMERS vs ASTERISKS (user 2026-11-25 "go ahead with 1": known lessons QA still sent back - qa_feedback.md
+        // "Asterisk only where a disclaimer backs it" + "Duplicate disclaimers"; QA 2026-11-24 Columbus GLB 250 / CPO:
+        // "Please remove these disclaimers", "Add this disclaimer. *EPA estimated fuel economy ...")
+        const box = q(`.${pre}-legal`) || q(`.${pre}-disc`);
+        const discs = box ? [...box.querySelectorAll('p,li')].filter((e) => !e.querySelector('p,li')).map((e) => (e.innerText || '').replace(/\s+/g, ' ').trim()).filter(Boolean) : [];
+        const hide = [box, ...wrap.querySelectorAll('[data-clone]')].filter(Boolean).map((e) => [e, e.style.display]);
+        hide.forEach(([e]) => { e.style.display = 'none'; });
+        const bodyTxt = wrap.innerText || '';
+        hide.forEach(([e, d]) => { e.style.display = d; });
+        const isLegal = box && (box.matches(`.${pre}-legal`) || discs.some((d) => /^[*†‡¹²³]/.test(d)));   // '-disc' can be a Discover/services section (Eagle Service Hub)
+        if (isLegal) res.disc = { n: discs.length, stars: (bodyTxt.match(/\*/g) || []).length,
+          dup: discs.filter((d, i) => discs.findIndex((x) => x.toLowerCase() === d.toLowerCase()) !== i).map((d) => d.slice(0, 50)),
+          mpg: /\bmpg\b|miles per gallon/i.test(bodyTxt), epa: discs.some((d) => /\bEPA\b/.test(d)) };
+        // Mercedes-Benz: text in MB Corpo S Text (headings corpoacond), never Roboto (QA 2026-11-24 Columbus GLB 250 / CPO)
+        res.roboto = [...wrap.querySelectorAll('h1,h2,h3,h4,h5,p,li,a,span,button,td,th,label')].filter((e) => e.offsetParent && (e.innerText || '').trim() && /roboto/i.test(getComputedStyle(e).fontFamily.split(',')[0])).length;
+        // Mercedes-Benz of Alexandria E-Class 2026-11-25: (R) on every 4MATIC / PRE-SAFE / DISTRONIC, no colon in "Starting MSRP at", no numbered footnotes ("*1."); GLC SUV 2026-11-25: Apple CarPlay / Android Auto too; GLE Coupe 2026-11-25: Burmester / Dolby Atmos too
+        const allTxt = wrap.innerText || '';
+        res.mbr = [...new Set((allTxt.match(/\b(4MATIC|PRE-SAFE|DISTRONIC|Apple CarPlay|Android Auto|Burmester|Dolby Atmos)\b(?![\s\u00a0]*\u00ae)/g) || []))];
+        res.msrpColon = (allTxt.match(/MSRP at\s*:/gi) || []).length;
+        res.fnum = discs.filter((d) => /^\*\s*\d+\.\s/.test(d)).map((d) => d.slice(0, 40));
       }
       // MOBILE QA points (user 2026-11-13: "specially in mobile preview since we always have a revision in that part")
       if (w === 390) {
@@ -112,7 +146,7 @@ async function sweep(b, dir) {
       // missing space in a heading (user 2026-11-13, Huston CDJR: H2 "Why Davenport Drivers ChooseHuston CDJR" -> "Choose Huston").
       // innerText (not textContent) so a <br> counts as a break. Brand camel-case words are allowed: anything followed by
       // (R)/TM, my* apps (myBuick, myChevrolet), and the list below (add a brand word here if it shows up as a false FIX).
-      const okCamel = /^(my[A-Z]\w*|CarPlay|OnStar|SiriusXM|eTorque|MyLink|LaneSense|ParkSense|ParkView|IntelliBeam|QuietTuning|WildPeak|BlueCruise|SmartWay|AutoStick|TowMax|MultiPro|PowerShift|DuraMax|EcoBoost|SelecTerrain|ProGrade|SafetySense|SmartSense|HondaSense|MaxCare|iPhone|YouTube|WiFi|McKinney|McAllen|DeSoto|LaGrange|DeKalb|SmartKey|ExpertSOLUTIONS)$/;
+      const okCamel = /^(my[A-Z]\w*|CarPlay|OnStar|SiriusXM|eTorque|MyLink|LaneSense|ParkSense|ParkView|IntelliBeam|QuietTuning|WildPeak|BlueCruise|SmartWay|AutoStick|TowMax|MultiPro|PowerShift|DuraMax|EcoBoost|SelecTerrain|ProGrade|SafetySense|SmartSense|HondaSense|MaxCare|iPhone|YouTube|WiFi|McKinney|McAllen|DeSoto|LaGrange|DeKalb|SmartKey|ExpertSOLUTIONS|EyeSight|StarTex|DriverFocus|MySubaru|VinFast)$/;
       res.glued = []; res.caps = [];
       if (w === 1920) wrap.querySelectorAll('h1,h2,h3,h4').forEach((h) => {
         const t = h.innerText.replace(/\s+/g, ' ').trim();
@@ -129,7 +163,7 @@ async function sweep(b, dir) {
         if (bad.length) res.glued.push(`${h.tagName} "${src}" (${[...new Set(bad)].join(', ')})`);
         // ALL-CAPS heading text in the source (user 2026-11-14, Durango: "use normal text styling for headings, then just use
         // CSS to make it uppercase"). Reads textContent, so CSS text-transform does not hide it. Acronyms/brand caps allowed below.
-        const okCaps = /^(ACTIV|HEMI|AWD|FWD|RWD|SRT|LED|SUV|SUVS|MSRP|CDJR|GMC|RAM|USB|GPS|EPA|MPG|BMW|AMG|SRX|XLT|LTZ|RST|ZR2|TRX|EV|AT4|HD|LB|CPO|VIN|APR|ADAS|RV|SXT|GTS|TPMS|NHTSA|IIHS|II|III|IV|VI|HP|DOHC|SOHC|CVT|GLC|GLE|GLS|GLA|GLB|CLA|CLE|EQS|EQE|EQB|MBUX|HVAC|SEL|XRT)$/;
+        const okCaps = /^(ACTIV|HEMI|AWD|FWD|RWD|SRT|LED|SUV|SUVS|MSRP|CDJR|GMC|RAM|USB|GPS|EPA|MPG|BMW|AMG|SRX|XLT|LTZ|RST|ZR2|TRX|EV|AT4|HD|LB|CPO|VIN|APR|ADAS|RV|SXT|GTS|TPMS|NHTSA|IIHS|II|III|IV|VI|HP|DOHC|SOHC|CVT|GLC|GLE|GLS|GLA|GLB|CLA|CLE|EQS|EQE|EQB|MBUX|HVAC|SEL|XRT|CARE|TFT|HDMI|CMBS|RDM|ACC|LKAS|TSR|BSI|TRONIC|DISTRONIC|STX|SYNC|BLIS|FX4|XL|AEB|FLEXBED|DIY|MODE|BOXER|SUBARU)$/;
         // "(FCA)" = an acronym in brackets after its full name keeps its caps (Santa Fe 2026-11-20)
         const caps = (src.replace(/\([A-Z][A-Z0-9]{1,6}\)/g, '').match(/\b[A-Z][A-Z'’]{2,}\b/g) || []).filter((x) => !okCaps.test(x.replace(/['’]/g, '')));
         if (caps.length) res.caps.push(`${h.tagName} "${src.slice(0, 60)}" (${caps.slice(0, 4).join(', ')})`); });
@@ -192,6 +226,10 @@ async function sweep(b, dir) {
           if (big === m && tg <= 6 && bg_ >= 40) res.offc.push(`"${label(T)}" text ${Math.max(0, tg)}px from the top, ${bg_}px from the bottom`); } });
       return res; }, w);
     if (r.err) { out.push('SKIP ' + r.err); await ctx.close(); break; }
+      // (R)/TM size (user 2026-11-25: "slightly increase the size so that it will be visible dont make it too large but dont make
+      // it too small"): wrapped symbol = about 0.7 of the text around it (OK from 0.6 / 12px, max 22px needed, up to 0.75)
+      if (r.tm && r.tm.bad.length) out.push(`FIX ${r.tm.bad.length} of ${r.tm.n} ®/™ symbol(s) the wrong size @${w} - run python -I "<toolkit>/tools/tm_fix.py" "<project folder>" (sizes the (R) like the live Mercedes-Benz of Alexandria GLS page, in every copy incl. the CSS inside the HTML field): ${r.tm.bad.slice(0, 4).join('; ')}`);
+      else if (r.tm && r.tm.n) out.push(`OK  ®/™ size @${w} (${r.tm.n})`);
     const fr = FIG && (w === 1920 ? FIG.desktop : w === 390 ? FIG.mobile : null);
     if (fr) { const c = await figCompare(p, fr, w);
       if (c && c.n) out.push(c.off.length ? `CHECK spacing vs Figma @${w} (${c.off.length} of ${c.n} spots off - match the Figma unless QA asked otherwise): ${c.off.slice(0, 5).map((x) => `above "${x.t}" ${x.pg}px, Figma ${x.fg}px`).join('; ')}${c.off.length > 5 ? ' (+' + (c.off.length - 5) + ' more)' : ''}` : `OK  spacing matches the Figma @${w} (${c.n} spots compared)`); }
@@ -221,6 +259,34 @@ async function sweep(b, dir) {
       out.push(r.blurry.length ? `FIX blurry (stretched >1.1x) at 1920 (${r.blurry.length}): ${r.blurry.slice(0, 8).join(', ')}${r.blurry.length > 8 ? ' ...' : ''}` : 'OK  no blurry images at 1920');
       out.push(r.touch.length ? `FIX no space between photo and band: ${[...new Set(r.touch)].join('; ')}` : 'OK  no photo touching a band');
       out.push(r.glued.length ? `FIX missing space in heading (QA Huston CDJR: "ChooseHuston" -> "Choose Huston"): ${r.glued.slice(0, 6).join('; ')}` : 'OK  no missing spaces in headings');
+      if (r.disc) { const d = r.disc;
+        if (d.n && !d.stars) out.push(`FIX ${d.n} disclaimer(s) but no * anywhere in the copy - QA removes disclaimers nothing points to (Columbus GLB 250 / CPO 2026-11-24): put the * on each claim the disclaimer backs, or remove the disclaimer`);
+        else if (d.stars && !d.n) out.push('FIX * in the copy but no disclaimer list - add the disclaimer for each * or remove the *');
+        else if (d.n > d.stars) out.push(`CHECK ${d.n} disclaimers but only ${d.stars} * in the copy - each disclaimer needs a claim with a * on the page, remove the others (QA Columbus 2026-11-24: "Please remove these disclaimers")`);
+        else if (d.n) out.push(`OK  ${d.n} disclaimers, ${d.stars} * in the copy`);
+        if (d.n) out.push(d.dup.length ? `FIX duplicate disclaimer(s): ${d.dup.join('; ')}` : 'OK  no duplicate disclaimers');
+        if (d.mpg) out.push(d.epa ? 'OK  MPG shown + EPA disclaimer' : 'FIX MPG shown but no EPA disclaimer - add "*EPA estimated fuel economy. Compare the estimated mpg to the estimated mpg of other vehicles. You may get different mileage depending on how fast you drive, weather conditions and trip length. Your actual highway mileage will probably be less than the highway estimate." and a * on the MPG (QA Columbus GLB 250, 2026-11-24)'); }
+      if (/mercedes/i.test(dir) && r.mbr) out.push(r.mbr.length ? `FIX Mercedes-Benz page: registered mark missing on ${r.mbr.join(', ')} - add ® to every instance in text (headings, copy, disclaimers; not alt) (QA Alexandria E-Class 2026-11-25)` : 'OK  ® on every 4MATIC / PRE-SAFE / DISTRONIC / Apple CarPlay / Android Auto / Burmester / Dolby Atmos');
+      if (r.msrpColon !== undefined) out.push(r.msrpColon ? `FIX ${r.msrpColon} price label(s) "Starting MSRP at:" - remove the colon (QA Alexandria E-Class 2026-11-25: "Remove the colon in the trim prices")` : 'OK  no colon after "MSRP at"');
+      if (r.fnum && r.fnum.length) out.push(`FIX numbered footnote in the disclaimers - drop the number after the * (QA Alexandria E-Class 2026-11-25: "Remove this number"): ${r.fnum.join('; ')}`);
+      // ANY page: fonts come from the Figma (user 2026-11-25: "the AI ... kept on using Roboto font ... always use the font that
+      // the figma design uses"). Figma fonts = figma/layout.json "fonts" (or figma/node.json). Roboto on the page while the
+      // Figma has no Roboto = FIX, unless project.json "font_subs" names Roboto as the noted stand-in for a proprietary font.
+      { let ff = (FIG && FIG.fonts) || null;
+        if (!ff) { try { ff = [...new Set([...fs.readFileSync(path.join(dir, 'figma', 'node.json'), 'utf8').matchAll(/"fontFamily"\s*:\s*"([^"]+)"/g)].map((m) => m[1]))]; } catch (e) { ff = null; } }
+        let subs = ''; try { subs = JSON.stringify(JSON.parse(fs.readFileSync(path.join(dir, 'project.json'), 'utf8')).font_subs || ''); } catch (e) { /* none */ }
+        if (/SET-FIGMA-FONT/.test(css)) out.push('FIX page font is still the SET-FIGMA-FONT placeholder - use the Figma font (project.json "font")');
+        if (ff && ff.length && r.roboto !== undefined && !/mercedes/i.test(dir)) {
+          if (r.roboto && !ff.some((f) => /roboto/i.test(f)) && !/roboto/i.test(subs)) out.push(`FIX ${r.roboto} text element(s) in Roboto but the Figma uses ${ff.join(', ')} - use the Figma font (a proprietary one gets the closest web font, noted in project.json "font_subs" + the tracker note)`);
+          else out.push(`OK  fonts per Figma (${ff.join(', ')})`); } }
+      if (/mercedes/i.test(dir) && r.roboto !== undefined) out.push(r.roboto ? `FIX Mercedes-Benz page: ${r.roboto} text element(s) in Roboto - use MB Corpo S Text for body text (headings corpoacond), never Roboto (QA Columbus GLB 250 / CPO 2026-11-24)` : 'OK  no Roboto on this Mercedes-Benz page');
+      // ANY page: arrows are drawn, not typed (user 2026-11-25, Mercedes-Benz of Alexandria Battery Replacement: "the arrow from figma and the
+      // arrow in our page is not the same"). Brand fonts (MB Corpo S Text, ...) have no U+2192, so a typed arrow falls back to Arial's
+      // long thin arrow while Figma draws its own fallback. Use an inline SVG measured from the Figma render (stroke = currentColor).
+      { let src = ''; try { src = fs.readFileSync(path.join(dir, 'preview.html'), 'utf8'); } catch (e) { /* none */ }
+        const txt = src.replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<[^>]+>/g, ' ');
+        const hits = (txt.match(/&(rarr|larr|raquo|rsaquo|laquo|lsaquo);|&#(8594|8592|187|8250|10132|10140);|[←-⇿➔-➿»›]/g) || []);
+        if (src) out.push(hits.length ? `FIX ${hits.length} arrow character(s) typed as text (${[...new Set(hits)].join(' ')}) - draw the Figma arrow as an inline SVG (measure it from the Figma render: width, height, stroke), the page font has no arrow glyph so it falls back to a different-looking one` : 'OK  no typed arrow characters'); }
       out.push(r.caps.length ? `FIX ALL-CAPS heading text (${r.caps.length}) - write Title Case in the HTML, uppercase via CSS text-transform (user 2026-11-14): ${r.caps.slice(0, 6).join('; ')}` : 'OK  heading text is not typed in ALL CAPS');
     }
     await ctx.close();

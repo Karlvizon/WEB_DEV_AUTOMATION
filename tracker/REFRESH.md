@@ -84,7 +84,7 @@ changes, clean-ups, fixes across several projects, a refresh's findings), log it
 answers, monday status changes) are already in the history (history.json, shown at the bottom of the Activity tab) with date and time.
 
 **No questions to the user (2026-11-13):** decide with QA's rules (`_mlp-toolkit/qa_feedback.md`), then the Figma; record
-"Decided: ..." in the Claude's Notes column with `--note` (the Notes column is the user's only). **After every revision:** `--note <id> "Revision #N done: <what changed>"`.
+"Decided: ..." in the Claude's Notes column with `--note` (the Notes column is the user's only). **After every revision:** `--note <id> "Revision #N done: <what changed>"` + the "CMS: ..." line that `production.py pack` prints (user, 2026-11-25: "put a description in the revision what to put in the CMS ... if you change the HTML indicate it"). The pack compares each paste file with qa/cms-baseline/ (the pack QA reviewed, kept when a new revisions/ folder appears) and writes to-post/cms-changes.json; the Ready-to-post card shows it.
 Several tracker changes at once: `--batch file.json` ([[kind, id, text], ...]) = one Excel close/reopen.
 **City pages are part of this automation (user, 2026-11-13: "dont create a separate automation we will include it on the
 MLP automation"):**

@@ -54,9 +54,43 @@ def now_s():
 
 
 # ---------------------------------------------------------------- pop-ups
+# The open tracker page asks /api/version every 4 s (a hidden browser tab at least once a minute); server.py calls
+# page_seen() then. A file mtime, so pop-ups from any process see it. (user, 2026-11-24: pop-ups only when it's open)
+PAGE_SEEN = APP / "page_seen.txt"
+PAGE_OPEN_SECS = 180
+
+
+def page_seen():
+    try:
+        if time.time() - PAGE_SEEN.stat().st_mtime < 20:
+            return
+    except OSError:
+        pass
+    try:
+        PAGE_SEEN.write_text(now_s(), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def page_open():
+    try:
+        return time.time() - PAGE_SEEN.stat().st_mtime < PAGE_OPEN_SECS
+    except OSError:
+        return False
+
+
+def short(s, n):
+    s = " ".join(str(s or "").split())
+    return s if len(s) <= n else s[:n - 1].rstrip(" ,;-") + "…"
+
+
 def toast(title, body, anchor="", fix_sid=None):
     """Windows pop-up; clicking it opens the tracker (on the given tab). fix_sid adds a "Fix it now" button that opens
     the page on that revision and asks before Claude starts (user, 2026-11-13: "Fix it now on revision pop-ups")."""
+    if settings.get("popups_only_when_open") is not False and not page_open():
+        return   # tracker not open in a browser: no pop-up (the page still shows everything when it is opened)
+    # short pop-ups (user, 2026-11-25: "Shorten the information on the notification") - details live in the tracker
+    title, body = short(title, 50), short(body, 90)
     extra = []
     if fix_sid and settings.get("fix_from_popup"):
         extra = ["-Action2", "Fix it now", "-Url2", f"http://127.0.0.1:8765/#fix={fix_sid}"]
@@ -95,7 +129,7 @@ def alerts_for(before, after, cfg):
         old = b_items.get(sid)
         if old is None:
             if cfg.get("alert_new"):
-                out.append(("New page assigned to you", f"{name} ({i['status']}, due {i.get('due') or '-'})", "assigned"))
+                out.append(("New page", f"{name}" + (f" · due {i['due']}" if i.get("due") else ""), "assigned"))
             continue
         rev_now = i.get("claude") == "Revision needed" or i.get("status") == "Needs Revision"
         rev_before = old.get("claude") == "Revision needed" or old.get("status") == "Needs Revision"
@@ -104,9 +138,9 @@ def alerts_for(before, after, cfg):
         mob = lambda it: sum(1 for l in str(it.get("revisions") or "").splitlines() if re.match(r"\[[^\]]*\]\s*Final Mobile Check - ", l))
         new_mobile = mob(i) > mob(old)
         if cfg.get("alert_revision") and new_mobile:
-            out.append(("QA asked for a Final Mobile Check revision", f"{name} (phone view)", f"item={sid}", sid))
+            out.append(("Mobile check revision", name, f"item={sid}", sid))
         elif cfg.get("alert_revision") and rev_now and not rev_before:
-            out.append(("QA asked for a revision", name, f"item={sid}", sid))
+            out.append(("Revision", name, f"item={sid}", sid))
     if cfg.get("alert_approved"):
         for sid in a_appr - b_appr:
             if sid in b_items:
@@ -131,7 +165,7 @@ def due_alerts(cfg, w):
         dl = i.get("days_left")
         if dl is not None and 0 <= dl <= 1 and i.get("status") not in ("Waiting for Review", "On-Hold", "Approved") and sent.get(sid) != today:
             sent[sid] = today
-            out.append((f"Due {'today' if dl == 0 else 'tomorrow'}", f"{i['dealer']} - {i['mlp']} ({i['status']})", "all"))
+            out.append((f"Due {'today' if dl == 0 else 'tomorrow'}", f"{i['dealer']} - {i['mlp']}", "all"))
     for k in [k for k, v in sent.items() if v < (date.today() - timedelta(days=3)).isoformat()]:
         sent.pop(k)
     return out
@@ -145,7 +179,10 @@ def send_alerts(alerts):
             toast(al[0], al[1], al[2], al[3] if len(al) > 3 else None)
             time.sleep(1)
     else:
-        toast(f"{len(alerts)} updates in the Web Dev Tracker", "; ".join(f"{al[0]}: {al[1]}" for al in alerts)[:280], "all")
+        kinds = {}
+        for al in alerts:
+            kinds[al[0]] = kinds.get(al[0], 0) + 1
+        toast(f"{len(alerts)} updates", ", ".join(f"{n} {k.lower()}" for k, n in kinds.items()), "all")
         for al in alerts:                        # revisions still get their own pop-up with "Fix it now"
             if len(al) > 3:
                 time.sleep(1)
@@ -177,6 +214,32 @@ def run_refresh(reason, log_name="auto-refresh.log"):
     return code == 0, line or (out[-1] if out else "")
 
 
+# ---------------------------------------------------------------- loud failures (user, 2026-11-25 #4)
+# A broken monday update only showed "(error)" in a small chip (2026-11-24 a refresh crashed and nobody saw). Now:
+# watch.json "fail" -> red bar across the tracker + one pop-up, until an update works again (it retries every check).
+def mark_fail(w, what, detail):
+    first = not w.get("fail")
+    f = w.get("fail") or {"since": now_s(), "count": 0}
+    f.update({"what": what, "detail": str(detail or "")[:200], "last": now_s(), "count": int(f.get("count") or 0) + 1})
+    w["fail"] = f
+    if first:
+        toast("monday update failed", "Tracker may be out of date - retrying.", "all")
+
+
+def mark_ok(w):
+    w.pop("fail", None)
+
+
+def note_refresh(ok, detail=""):
+    """For refreshes outside the watcher loop (header Refresh job, Start queue between pages)."""
+    w = read_json(WATCH, {})
+    if ok:
+        mark_ok(w)
+    else:
+        mark_fail(w, "monday update", detail)
+    write_json(WATCH, w)
+
+
 def watch_state():
     w = read_json(WATCH, {})
     w["connector"] = read_json(APP / "monday_health.json", {}).get("connector")
@@ -199,8 +262,7 @@ def new_during_job(w):
         told = set(w.get("told_new") or [])
         fresh = [i for i in new if str(i) not in told]
         if fresh and settings.get("alert_new") is not False:
-            toast("New page assigned on monday", f"{len(fresh)} new page(s) - they appear in the tracker when the "
-                  "current Claude run ends.", "assigned")
+            toast(f"{len(fresh)} new page(s) on monday", "Shows after Claude's current run.", "assigned")
         w["told_new"] = sorted(told | {str(i) for i in new})[-200:]
     write_json(WATCH, w)
 
@@ -234,6 +296,7 @@ def watcher(job_running):
             if r.returncode != 0:
                 w["error"] = ((r.stdout or "") + (r.stderr or "")).strip().splitlines()[-1:] or ["check failed"]
                 w["error"] = w["error"][0][:200]
+                mark_fail(w, "monday check", w["error"])
             else:
                 w.pop("error", None)
                 res = json.loads(r.stdout.strip().splitlines()[-1])
@@ -241,7 +304,7 @@ def watcher(job_running):
                 last_full = w.get("last_full")
                 stale = not last_full or datetime.now() - datetime.strptime(last_full, "%Y-%m-%d %H:%M:%S") >= timedelta(minutes=FULL_EVERY)
                 changed = sig != w.get("sig")          # compared BEFORE saving (the label always said "30-minute" before)
-                if changed or stale or full:
+                if changed or stale or full or w.get("fail"):   # after a failure: full update on every check until it works
                     first = w.get("sig") is None
                     w["sig"] = sig
                     write_json(WATCH, w)
@@ -254,12 +317,17 @@ def watcher(job_running):
                     if why not in (f"{FULL_EVERY}-minute full check (new assignments)", "you pressed Refresh"):
                         w["last_change"] = now_s()
                     w["last_result"] = line if ok else "refresh failed - see the auto-refresh log"
+                    if ok:
+                        mark_ok(w)
+                    else:
+                        mark_fail(w, "monday update", (line or "refresh_monday.py failed")[:200])
             alerts = due_alerts(cfg, w)
             write_json(WATCH, w)
             send_alerts(alerts)
         except Exception as e:  # never let the loop die
             w = read_json(WATCH, {})
             w["error"] = f"{type(e).__name__}: {e}"[:200]
+            mark_fail(w, "auto-update", w["error"])
             write_json(WATCH, w)
         finally:
             AUTO["busy"] = False
@@ -418,18 +486,14 @@ def finished_popup(job):
     r = job.get("result") or {}
     ok = r.get("subtype") == "success"
     what = f"revision for {job.get('page')}" if job.get("action") == "fix" else f"build of {job.get('page')}" if job.get("action") == "build" else f"the blog {job.get('page')}" if job.get("action") == "blog" else ("the queue" if job.get("action") == "start" else job.get("action"))
-    text = " ".join((job.get("result_text") or job.get("activity") or "").split())
-    cost = f" (about ${r['cost_usd']:.2f})" if r.get("cost_usd") else ""
-    if ok:
-        title = f"Claude finished {what}"
-        body = (text[:220] + ("..." if len(text) > 220 else "")) or "Done - check the page and post it."
+    if ok:   # Claude's full result stays in the job log / page notes, not in the pop-up
+        title, body = "Claude finished", f"{what[:1].upper()}{what[1:]} - check and post."
     else:
-        title = f"Claude stopped before finishing {what}"
-        body = ("Reason: " + str(r.get("subtype")) if r.get("subtype") else "It ended without a result") + " - open the log in the tracker."
+        title, body = "Claude stopped", f"{what[:1].upper()}{what[1:]} - see the log."
     anchor = f"item={job.get('sid')}" if job.get("action") in ("fix", "build") and job.get("sid") else "post"
     if job.get("action") == "blog":
         anchor = "blogs"
-    toast(title, body + cost, anchor)
+    toast(title, body, anchor)
 
 
 def record_cost(job):
@@ -796,18 +860,12 @@ def vscode():
 
 
 def dealer_folder(dealer, kind="MLP"):
-    cfg = settings.load()
-    root = Path(cfg["city_root"] if kind == "City Page" else cfg["mlp_root"])
-    cand = root / dealer
-    if cand.is_dir():
-        return cand
-    # fall back to a folder whose name matches loosely (e.g. "Huston CDJR" vs "Huston CDJR ")
-    want = re.sub(r"[^a-z0-9]", "", dealer.lower())
-    if root.is_dir():
-        for d in root.iterdir():
-            if d.is_dir() and re.sub(r"[^a-z0-9]", "", d.name.lower()) == want:
-                return d
-    return None
+    return settings.dealer_folder(dealer, kind)
+
+
+def page_folder(it):
+    """The page's own folder, never the dealer folder (settings.page_folder)."""
+    return settings.page_folder(it["dealer"], it["mlp"], it.get("type") or "MLP", it.get("folder"))
 
 
 def open_in_vscode(dealer, kind="MLP"):
@@ -987,10 +1045,10 @@ def figma_key_alerts():
     k = f"{s.get('expires')}|{step}"
     if sent.get(k):
         return
-    msg = {"refused": "Figma refused the key, so the spacing check vs Figma is paused. Make a new key in Figma and paste it in Settings.",
-           "expired": "The Figma key has expired, so the spacing check vs Figma is paused. Make a new key in Figma and paste it in Settings.",
-           "1day": "The Figma key expires tomorrow. Make a new key in Figma and paste it in Settings > Figma connection.",
-           "7days": f"The Figma key expires in {s.get('days')} days ({s.get('expires')}). Make a new one in Figma and paste it in Settings > Figma connection."}[step]
+    msg = {"refused": "Key refused - paste a new one in Settings.",
+           "expired": "Key expired - paste a new one in Settings.",
+           "1day": "Key expires tomorrow - paste a new one in Settings.",
+           "7days": f"Key expires in {s.get('days')} days - renew in Settings."}[step]
     toast("Figma key", msg, "settings")
     sent[k] = now_s()
     w = read_json(WATCH, {})
@@ -1028,7 +1086,7 @@ def daily_jobs(cfg):
                 write_json(WATCH, w)
                 return
             copy_to_clipboard(f)
-            toast("Shift done - summary copied", f"Paste it anywhere (Ctrl+V). Saved as shift-reports/{f.name}", "activity")
+            toast("Shift summary copied", "Paste with Ctrl+V.", "activity")
             weekly_qa_report(cfg, day)
         w["reports"] = (done + [day])[-60:]
         write_json(WATCH, w)
@@ -1051,7 +1109,7 @@ def weekly_qa_report(cfg, day):
         (REPORTS / name).write_text(r["text"] + "\n", encoding="utf-8")
         k = r["kpi"]
         top = next((t["type"] for t in r["types"] if t["this"]), "none")
-        toast("Weekly QA report ready", f"{k['points']} QA points this week, most: {top}. Click to open and copy it.", "qareport")
+        toast("Weekly QA report", f"{k['points']} points, most: {top}", "qareport")
     except Exception:
         pass
 
@@ -1231,7 +1289,12 @@ def pack_summary(items):
         batches = [{"name": b.name, "count": sum(1 for x in b.iterdir() if x.is_file()), "done": b.name in done}
                    for b in sorted(up.iterdir()) if b.is_dir()] if up.is_dir() else []
         nf = d / "3-post-on-monday.txt"
-        out[str(i["subitem_id"])] = {"files": files, "note": nf.exists(), "batches": batches,
+        ch = read_json(d / "cms-changes.json", {})   # revision: which CMS fields changed (production.pack, 2026-11-25)
+        st = {r["file"]: r for r in ch.get("fields", [])} if ch.get("revision") else {}
+        for f in files:
+            if f["name"] in st:
+                f["state"], f["lines"] = st[f["name"]]["state"], st[f["name"]].get("lines")
+        out[str(i["subitem_id"])] = {"files": files, "note": nf.exists(), "batches": batches, "cms": ch.get("line") or "",
                                      "notes": list(split_note(nf.read_text(encoding="utf-8", errors="replace"))) if nf.exists() else [],
                                      "ba": len(list((d / "4-before-after").glob("*.png"))) if (d / "4-before-after").is_dir() else 0}
     return out
@@ -1447,11 +1510,11 @@ SEO_KEYS = ("seo", "meta", "title tag", "page title", "description", "url", "slu
 _OK_CAPS = set("ACTIV HEMI AWD FWD RWD SRT LED SUV SUVS MSRP CDJR GMC RAM USB GPS EPA MPG BMW AMG SRX XLT LTZ RST ZR2 TRX EV "
                "AT4 HD LB CPO VIN APR ADAS RV SXT GTS TPMS NHTSA IIHS II III IV VI HP DOHC SOHC CVT AM PM FAQ FAQS DDC CTA "
                "NAV AKG MOAB DSSV TNGA XSE XLE USA AL GA FL TX CA NY NJ PA MS AZ NV OH MI IL NC SC TN VA KY LA OK AR "
-               "GLC GLE GLS GLA GLB CLA CLE EQS EQE EQB MBUX HVAC SEL XRT".split())
+               "GLC GLE GLS GLA GLB CLA CLE EQS EQE EQB MBUX HVAC SEL XRT TRONIC DISTRONIC".split())
 _OK_CAMEL = re.compile(r"^(my[A-Z]\w*|CarPlay|OnStar|SiriusXM|eTorque|MyLink|LaneSense|ParkSense|ParkView|IntelliBeam|"
                        r"QuietTuning|WildPeak|BlueCruise|SmartWay|AutoStick|TowMax|MultiPro|PowerShift|DuraMax|EcoBoost|"
                        r"SelecTerrain|ProGrade|SafetySense|SmartSense|HondaSense|MaxCare|iPhone|YouTube|WiFi|McKinney|"
-                       r"McAllen|DeSoto|LaGrange|DeKalb|MBUX|eSUV|CarBravo|TurboMax|MultiStow|MultiPro)$")
+                       r"McAllen|DeSoto|LaGrange|DeKalb|MBUX|eSUV|CarBravo|TurboMax|MultiStow|MultiPro|VinFast)$")
 _JOIN = "\x00"   # marks where an element starts inside a heading: a word joined there with no space is "glued"
 _VAGUE = ("click here", "here", "read more", "learn more", "more")
 

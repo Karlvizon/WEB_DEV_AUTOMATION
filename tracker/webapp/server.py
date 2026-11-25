@@ -395,7 +395,7 @@ class PidProc:
 def save_job_file(p):
     try:
         JOBS.mkdir(exist_ok=True)
-        keep = {k: JOB.get(k) for k in ("action", "started", "log", "claude", "page", "sid")}
+        keep = {k: JOB.get(k) for k in ("action", "started", "log", "claude", "page", "sid", "chain")}
         JOB_FILE.write_text(json.dumps(dict(keep, pid=p.pid), ensure_ascii=False), encoding="utf-8")
     except OSError:
         pass
@@ -415,7 +415,10 @@ def reattach_job():
         JOB.update({"proc": PidProc(j["pid"]), "action": j.get("action"), "started": j.get("started"), "log": j.get("log"),
                     "ended": None, "code": None, "claude": j.get("claude"), "page": j.get("page"), "sid": j.get("sid"),
                     "activity": "Still running from before the tracker restarted (live details come back with the next job)",
-                    "tokens": None, "result": None, "stopped_by_user": False, "reattached": True})
+                    "tokens": None, "result": None, "stopped_by_user": False, "reattached": True, "chain": j.get("chain")})
+        if j.get("chain"):   # a Start queue run survived the restart: keep the queue going after it
+            c = j["chain"][6:] if str(j["chain"]).startswith("blogs:") else None
+            CHAIN.update({"on": True, "tried": [[j.get("action"), str(j.get("sid") or "")]], "pos": 1, "total": 1, "runs": 1, "started": j.get("started"), "cms": c})
     try:
         with open(j["log"], "a", encoding="utf-8") as f:
             f.write(chr(10) + f"{datetime.now():%Y-%m-%d %H:%M:%S}  tracker restarted - reconnected to this job (pid {j['pid']})" + chr(10))
@@ -449,6 +452,11 @@ def job_state():
         if p is not None and not running and JOB["ended"] is None:
             JOB["ended"], JOB["code"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S"), p.returncode
             JOB_FILE.unlink(missing_ok=True)
+            if JOB.get("action") == "refresh" and not JOB.get("claude"):   # header Refresh: loud if it failed (2026-11-25)
+                tail = ""
+                if JOB.get("log") and Path(JOB["log"]).exists():
+                    tail = (Path(JOB["log"]).read_text(encoding="utf-8", errors="ignore").strip().splitlines() or [""])[-1]
+                features.note_refresh(p.returncode == 0, tail)
             if JOB.get("action") == "start":   # the queue run is over: the header no longer says RUNNING (2026-11-19)
                 threading.Thread(target=lambda: subprocess.run(
                     [sys.executable, "-I", str(HERE / "build_mlp_tracker.py"), "--automation", "Stopped"],
@@ -456,11 +464,13 @@ def job_state():
         tail = ""
         if JOB["log"] and Path(JOB["log"]).exists():
             tail = "\n".join(Path(JOB["log"]).read_text(encoding="utf-8", errors="ignore").splitlines()[-40:])
-        return {"running": running, "action": JOB["action"], "started": JOB["started"], "ended": JOB["ended"],
+        return {"running": running or CHAIN["on"], "proc_running": running, "action": "start" if JOB.get("chain") or CHAIN["on"] else JOB["action"],
+                "unit": JOB["action"], "queue": {"pos": CHAIN["pos"], "total": CHAIN["total"], "cms": CHAIN.get("cms")} if CHAIN["on"] else None,
+                "started": JOB["started"], "ended": JOB["ended"],
                 "code": JOB["code"], "log": tail, "direct": has_token(), "activity": JOB.get("activity"),
                 "tokens": JOB.get("tokens"), "result": JOB.get("result"), "claude": JOB.get("claude", False),
                 "progress": features.progress_for(JOB["started"]) if JOB.get("claude") else None,
-                "auto_refreshing": features.auto_running(), "page": JOB.get("page") if JOB.get("action") in ("fix", "build") else None}
+                "auto_refreshing": features.auto_running(), "page": JOB.get("page") if JOB.get("action") in ("fix", "fixgroup", "build", "blog", "batch", "batch-copy") else None}
 
 
 def session_state():
@@ -501,6 +511,8 @@ def fix_prompt(sid):
         "check'), put 'Final mobile check: passed (390/375/430) ...' in the note, make "
         "SEO auto-fix (every build and every revision, after the page is built/fixed and before the QA sweep): run python seo_fix.py '<project folder>' --sid <subitem id> - it turns ALL-CAPS headings into Title Case with CSS uppercase, adds missing spaces in headings and missing alt text, in every copy of the page, and checks the look. Re-run split_fields/production.py pack only if you change preview.html afterwards. "
         "before/after images, rebuild the upload pack (production.py pack), write 'Revision #N done: ...' with "
+        "the 'CMS: ...' line production.py pack prints (which CMS fields changed and need pasting - user, 2026-11-25) "
+        "in it, with "
         "build_mlp_tracker.py --note, and mark it 'Claude is done'. No questions to the user - decide by the QA rules. "
         + (f"Before marking it done, also check these lessons QA keeps sending back for {it['dealer']} (fix any that fail, "
            f"write 'Dealer lessons checked' in the note): {lessons} " if lessons else "") +
@@ -539,28 +551,202 @@ def build_prompt(sid):
         f"'{name}' '<step>' '1/1'. Finish with a short plain report.")
 
 
-def run_action(action, sid=None):
+# ---------------------------------------------------------------- Start = one page per run (2026-11-25)
+# user, 2026-11-25 ("go ahead with 1, 2 and 4"): the last Start runs took 111 and 126 minutes for 5 pages and blocked
+# everything else. Now Start works the queue as a chain of short runs: one page (or one city-page batch / one dealer's
+# city revisions) per Claude run, a quick monday check between runs (new revisions jump ahead), then the next run starts
+# by itself - until the queue is empty or Stop. An empty queue does not start Claude at all.
+CHAIN = {"on": False, "tried": [], "pos": 0, "total": 0, "started": None, "cms": None}   # cms set = a Blogs CMS queue
+_s = PROMPTS["start"][0]
+CITY_RULE = _s[_s.index("CITY PAGES - design once"):_s.index("Before marking any page done")]
+
+
+def automation_running():
+    return read_json(HERE / "automation_state.json", {}).get("state") == "Running"
+
+
+def queue_units():
+    """Claude's queue as runs, in order: revisions first, then new pages; each by due date. [(action, sid, name)]"""
+    items = read_json(STATE, {}).get("items", [])
+    due = lambda i: str(i.get("due") or "9999")
+    units = []
+    revs = sorted([i for i in items if i.get("claude") == "Revision needed" and i.get("status")], key=due)
+    city_revs = {}
+    for i in revs:
+        if i.get("type") == "City Page":
+            city_revs.setdefault(i["dealer"], []).append(i)
+    seen = set()
+    for i in revs:
+        g = city_revs.get(i["dealer"]) if i.get("type") == "City Page" else None
+        if g and len(g) > 1:                      # one dealer's city revisions together (design once, content per page)
+            if i["dealer"] not in seen:
+                seen.add(i["dealer"])
+                units.append(("fixgroup", ",".join(str(x["subitem_id"]) for x in g), f"{i['dealer']} - {len(g)} city page revisions"))
+        else:
+            units.append(("fix", str(i["subitem_id"]), f"{i['dealer']} - {i['mlp']}"))
+    new = sorted([i for i in items if batch.pending(i)], key=due)
+    seen = set()
+    for i in new:
+        if i.get("type") == "City Page":
+            pid = str(i.get("item_id"))
+            if pid in seen:
+                continue
+            g = batch.group(pid)
+            todo = [x for x in g if batch.pending(x)]
+            if any(x.get("claude") == "Claude is done" for x in g):   # sample already built -> copy the rest from it
+                seen.add(pid)
+                units.append(("batch-copy", pid, f"{i['dealer']} - {len(todo)} city page(s) from the sample"))
+                continue
+            if len(todo) > 1:                                        # build the sample first, the copy run follows
+                seen.add(pid)
+                units.append(("batch", pid, f"{i['dealer']} - city page sample ({len(todo)} pages)"))
+                continue
+        units.append(("build", str(i["subitem_id"]), f"{i['dealer']} - {i['mlp']}"))
+    return units
+
+
+def blog_units(cms):
+    """Blogs tab Start per CMS (user, 2026-11-26: "put a start button beside the name of the cms for it to start creating
+    the blogs for that cms"): every blog of that CMS's dealers that is your turn on monday (For Web Posting / For SEO
+    Review), has no folder yet and has a Google Doc - oldest publication date first. [("blog", monday url, name)]"""
+    r = blogs.blogs_by_dealer()
+    xs = [(x.get("date") or "9999", d["name"], x) for d in r["dealers"] if (d.get("cms") or "") == cms and d.get("auto", True)
+          for x in d.get("upcoming") or [] if x.get("turn") and x.get("doc")]
+    return [("blog", x["url"], f"{dn} - {x['name']}") for _, dn, x in sorted(xs, key=lambda y: (y[0], y[1]))]
+
+
+def fixgroup_prompt(sids):
+    """One dealer's open city-page revisions in one run (the CITY PAGES rule needs them together)."""
+    items = {str(i["subitem_id"]): i for i in read_json(STATE, {}).get("items", [])}
+    g = [items[s] for s in sids.split(",") if s in items]
+    if not g:
+        return None, None
+    name0, base = fix_prompt(g[0]["subitem_id"])
+    n, dealer = len(g), g[0]["dealer"]
+    lst = "; ".join(f"{i['mlp']} (subitem {i['subitem_id']})" for i in g)
+    flow = base.split("exactly as REFRESH.md", 1)[1].replace("Do not start any other page.", "Do not start any page outside this list.")
+    flow = flow.replace(f"'{name0}' '<step>' '1/1'", f"'<dealer> - <city>' '<step>' '<k>/{n}'")
+    return f"{dealer} - {n} city page revisions", (
+        f"fix group  (sent from the MLP Tracker Start queue). Work ONLY the open QA revisions of these {n} city pages of "
+        f"{dealer}: {lst}. {CITY_RULE}For each page follow this flow exactly as REFRESH.md" + flow)
+
+
+def chain_end(why):
+    if not CHAIN["on"]:
+        return
+    CHAIN["on"] = False
+    subprocess.run([sys.executable, "-I", str(HERE / "build_mlp_tracker.py"), "--automation", "Stopped"], capture_output=True, cwd=str(HERE))
+    n = CHAIN.get("runs", 0)
+    cms, CHAIN["cms"] = CHAIN.get("cms"), None
+    log_history((f"Blogs Start ({cms})" if cms else "Start queue") + f" {why}" + (f" after {n} run(s)" if n else ""))
+    if n and why != "stopped by you" and settings.get("alert_claude_done"):
+        if cms:
+            features.toast(f"{cms} blogs done", f"{n} blog(s) built - check the Blogs tab.", "blogs")
+        else:
+            features.toast("Start queue done", f"{n} page(s) - check Ready to post.", "post")
+
+
+def chain_next():
+    """Start the next run of the queue. Returns the run_action answer, or None when the queue is done."""
+    while CHAIN["on"]:
+        if not automation_running():
+            chain_end("stopped")
+            return None
+        units = [u for u in (blog_units(CHAIN["cms"]) if CHAIN.get("cms") else queue_units()) if [u[0], u[1]] not in CHAIN["tried"]]
+        if not units:
+            chain_end("finished - the queue is empty")
+            return None
+        act, sid, name = units[0]
+        CHAIN["tried"].append([act, sid])
+        CHAIN["pos"], CHAIN["total"] = len(CHAIN["tried"]), len(CHAIN["tried"]) + len(units) - 1
+        r = run_action(act, sid, chain=True)
+        if r.get("ok"):
+            CHAIN["runs"] = CHAIN.get("runs", 0) + 1
+            return r
+        log_history(f"Start queue skipped {name}: {r.get('error')}")
+    return None
+
+
+def chain_loop():
+    """Background: when a queue run ends, check monday once (new revisions go first), then start the next run.
+    Runs whether or not the tracker page is open."""
+    while True:
+        time.sleep(10)
+        try:
+            if not CHAIN["on"] or job_state()["proc_running"]:
+                continue
+            if JOB.get("stopped_by_user"):
+                chain_end("stopped by you")
+                continue
+            if has_token() and not CHAIN.get("cms"):   # blog queue: no MLP monday check between blogs
+                while features.AUTO["busy"] or features.auto_running():
+                    time.sleep(5)
+                features.AUTO["busy"] = True
+                try:
+                    ok, line = features.run_refresh("Start queue: checking monday before the next page")
+                    features.note_refresh(ok, line)
+                finally:
+                    features.AUTO["busy"] = False
+            if CHAIN["on"] and not job_state()["proc_running"]:
+                chain_next()
+        except Exception as e:   # never let the loop die
+            try:
+                log_history(f"Start queue error: {type(e).__name__}: {e}"[:200])
+            except Exception:
+                pass
+
+
+def run_action(action, sid=None, chain=False):
     if action == "stop":
         with JLOCK:
             p = JOB["proc"]
         if p is not None and p.poll() is None:
             JOB["stopped_by_user"] = True                 # no "Claude stopped" pop-up for your own Stop
             plat.kill_tree(p.pid)
+        CHAIN["on"] = False
         subprocess.run([sys.executable, "-I", str(HERE / "build_mlp_tracker.py"), "--automation", "Stopped"], capture_output=True, cwd=str(HERE))
         log_history("Stop pressed in the web app (any running Claude job was halted)")
         return {"ok": True, "msg": "Stopped"}
-    if action not in PROMPTS and action not in ("fix", "build", "blog", "batch", "batch-copy"):
+    if action == "start":   # one page per run, the next starts by itself (2026-11-25)
+        if job_state()["proc_running"] or CHAIN["on"]:
+            return {"error": "Start is already working the queue - wait for it or press Stop"}
+        if not queue_units():
+            return {"ok": True, "msg": "Nothing in Claude's queue - Claude was not started"}
+        try:
+            features.write_dealer_lessons()
+        except Exception:
+            pass
+        subprocess.run([sys.executable, "-I", str(HERE / "build_mlp_tracker.py"), "--automation", "Running"], capture_output=True, cwd=str(HERE))
+        CHAIN.update({"on": True, "tried": [], "pos": 0, "total": 0, "runs": 0, "started": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+        log_history("Start pressed in the web app - Claude works the queue one page per run")
+        r = chain_next()
+        return r or {"ok": True, "msg": "Nothing in Claude's queue - Claude was not started"}
+    if action == "blogcms":   # Blogs tab: Start beside a CMS name (2026-11-26) - sid = the CMS name
+        if job_state()["proc_running"] or CHAIN["on"]:
+            return {"error": "Claude is already working - wait for it or press Stop"}
+        if not blogs.auto_ok(sid):
+            return {"error": f"{sid} is not compatible with automation - build these blogs by hand"}
+        n = len(blog_units(sid or ""))
+        if not n:
+            return {"ok": True, "msg": f"No {sid} blogs to build - none is your turn without a folder"}
+        subprocess.run([sys.executable, "-I", str(HERE / "build_mlp_tracker.py"), "--automation", "Running"], capture_output=True, cwd=str(HERE))
+        CHAIN.update({"on": True, "tried": [], "pos": 0, "total": 0, "runs": 0, "cms": sid,
+                      "started": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+        log_history(f"Blogs Start pressed for {sid} - Claude builds {n} blog(s), one per run")
+        r = chain_next()
+        return r or {"ok": True, "msg": f"No {sid} blogs could be started"}
+    if action not in PROMPTS and action not in ("fix", "fixgroup", "build", "blog", "batch", "batch-copy"):
         return {"error": "unknown action"}
-    if job_state()["running"]:
+    if job_state()["proc_running"] or (CHAIN["on"] and not chain and action != "refresh"):
         if action == "blog":
             return {"error": f"a '{JOB['action']}' job is running - build the blog when it is done (or press Stop)"}
-        if action == "fix" and JOB.get("action") == "start":
+        if action == "fix" and (JOB.get("chain") or JOB.get("action") == "start"):
             return {"error": "Start is already running - it works revisions first, so this one is in its queue"}
         if action in ("build", "batch", "batch-copy"):
-            return {"error": f"Claude is already working ({'the Start queue' if JOB['action'] == 'start' else JOB.get('page') or JOB['action']}) "
+            return {"error": f"Claude is already working ({'the Start queue' if JOB.get('chain') or JOB['action'] == 'start' else JOB.get('page') or JOB['action']}) "
                              "- press Start now again when it is done, or press Stop first"}
         return {"error": f"a '{JOB['action']}' job is already running - wait for it or press Stop"}
-    if action in ("start", "fix", "build", "batch", "batch-copy"):
+    if action in ("fix", "fixgroup", "build", "batch", "batch-copy"):
         try:
             features.write_dealer_lessons()          # fresh per-dealer QA lessons for this run (2026-11-14)
             try:
@@ -573,6 +759,10 @@ def run_action(action, sid=None):
         name, prompt = fix_prompt(sid)
         if not prompt:
             return {"error": "page not found in the tracker"}
+    if action == "fixgroup":   # Start queue: one dealer's city-page revisions together (2026-11-25)
+        name, prompt = fixgroup_prompt(sid)
+        if not prompt:
+            return {"error": "those pages are not on the tracker"}
     if action == "build":   # "Start now" on a pending page (2026-11-19)
         name, prompt = build_prompt(sid)
         if not prompt:
@@ -591,14 +781,21 @@ def run_action(action, sid=None):
         batch.mark_copy(sid)
     if action == "blog":   # Blogs tab "Build it" (2026-11-17): sid = the blog's monday item URL
         name, prompt = blogs.build_prompt(sid)
+        if prompt == "":
+            return {"error": f"{name}: this dealer's CMS (DealerOn / MotiveHQ) is not compatible with automation - build it by hand"}
         if not prompt:
             return {"error": "blog not found on monday - press Refresh on the Blogs tab"}
     if action == "refresh" and features.auto_running():
         return {"error": "the auto-update is refreshing right now - it will be done in a few seconds"}
-    if action == "start":
-        subprocess.run([sys.executable, "-I", str(HERE / "build_mlp_tracker.py"), "--automation", "Running"], capture_output=True, cwd=str(HERE))
+    if chain and action in ("fix", "build"):   # the page's place in the queue for the Now card ("page 2/5")
+        prompt = prompt.replace("'<step>' '1/1'", f"'<step>' '{CHAIN['pos']}/{CHAIN['total']}'")
+    if chain:
+        prompt = prompt.replace("(sent from the MLP Tracker 'Fix it now' button)", "(sent from the MLP Tracker Start queue)").replace(
+            "(sent from the MLP Tracker 'Start now' button)", "(sent from the MLP Tracker Start queue)")
     if action == "fix":
         tools, turns = PROMPTS["start"][1], 250
+    elif action == "fixgroup":
+        tools, turns = PROMPTS["start"][1], 400
     elif action in ("build", "batch", "batch-copy"):   # + Google Drive download for the content doc (city pages / MLP content)
         tools, turns = PROMPTS["start"][1] + ["mcp__claude_ai_Google_Drive__download_file_content",
                                               "mcp__claude_ai_Google_Drive__get_file_metadata"], 300
@@ -621,8 +818,9 @@ def run_action(action, sid=None):
     with JLOCK:
         JOB.update({"action": action, "started": started, "log": str(log), "ended": None, "code": None, "claude": not direct,
                     "activity": None, "tokens": None, "result": None, "result_text": None, "stopped_by_user": False,
-                    "page": name if action in ("fix", "build", "blog", "batch", "batch-copy") else None,
-                    "sid": sid if action in ("fix", "build") else first["subitem_id"] if action == "batch" else None})
+                    "page": name if action in ("fix", "fixgroup", "build", "blog", "batch", "batch-copy") else None,
+                    "chain": ("blogs:" + CHAIN["cms"]) if chain and CHAIN.get("cms") else chain,
+                    "sid": sid if action in ("fix", "build", "blog") else first["subitem_id"] if action == "batch" else None})
     if direct:
         f = open(log, "a", encoding="utf-8")
         p = subprocess.Popen(cmd, cwd=str(HERE), stdout=f, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
@@ -633,6 +831,12 @@ def run_action(action, sid=None):
         JOB["proc"] = p
         save_job_file(p)
     who = "reading monday directly (no Claude)" if direct else "Claude Code is working in the background"
+    if chain and CHAIN.get("cms"):
+        log_history(f"Blogs Start ({CHAIN['cms']}) {CHAIN['pos']}/{CHAIN['total']}: Claude started on the blog {name}")
+        return {"ok": True, "msg": f"Claude is building {CHAIN['cms']} blogs: {name} ({CHAIN['pos']} of {CHAIN['total']})"}
+    if chain:
+        log_history(f"Start queue run {CHAIN['pos']}/{CHAIN['total']}: Claude started on {name}")
+        return {"ok": True, "msg": f"Start: Claude is on {name} ({CHAIN['pos']} of {CHAIN['total']}) - one page per run"}
     if action == "blog":
         log_history(f"Build it: Claude started on the blog {name}")
         return {"ok": True, "msg": f"Claude is building the blog {name} - follow it in the header"}
@@ -666,27 +870,19 @@ def claude_target(sid=None, dealer=None):
 
 
 def claude_open(sid=None, dealer=None):
-    """"Open in Claude Code" (2026-11-19, user chose A over the in-page terminal): open the page's folder (or the dealer
-    folder) in VS Code and hand back a vscode://anthropic.claude-code/open?prompt=... link; the page opens it, so the
-    Claude Code chat starts in that window with the page details typed in (no Enter - the user adds the task).
-    Images can be pasted / dropped there as usual."""
+    """"Open in VS Code" (2026-11-24, was "Open in Claude Code"; user: "opening the VS code where the project is. The
+    project specifically, not the parent folder"): opens only the page's own folder in VS Code - no Claude Code chat
+    link, never the dealer folder. A page without its own folder yet gets a message instead."""
     key, title, it, dealer = claude_target(sid, dealer)
-    if not key:
+    if not it:
         return {"error": "That page is not on the tracker"}
-    kind = (it or {}).get("type") or "MLP"
-    folder = Path(it["folder"]) if it and it.get("folder") and Path(it["folder"]).is_dir() else features.dealer_folder(dealer, kind)
+    folder = features.page_folder(it)
     if not folder:
-        return {"error": f"No folder for {title} yet"}
-    # one short line (user, 2026-11-19 "is this necessary?" -> A): the rest - tracker path, QA rules, where the page's
-    # status / notes / QA comment live - is in CLAUDE.md in the MLP and CITY PAGES folders, which Claude reads by itself
-    prompt = (f"{it['dealer']} – {it['mlp']}{' (city page)' if it.get('type') == 'City Page' else ''}. Task: " if it
-              else f"{dealer} (whole dealer). Task: ")
+        return {"error": f"{title} has no folder yet - it gets one when the page is built"}
     subprocess.Popen([features.vscode(), str(folder)], creationflags=0x08000000,
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    time.sleep(2)   # let VS Code focus that window first - the link goes to the focused window
-    log_history(f"Opened in Claude Code: {title}")
-    return {"ok": True, "msg": f"Opening {folder.name} in VS Code with Claude Code",
-            "uri": "vscode://anthropic.claude-code/open?prompt=" + quote(prompt, safe="")}
+    log_history(f"Opened in VS Code: {title}")
+    return {"ok": True, "msg": f"Opening {folder.name} in VS Code"}
 
 
 class H(BaseHTTPRequestHandler):
@@ -725,6 +921,7 @@ class H(BaseHTTPRequestHandler):
         if u.path == "/api/blog-html":   # copy button: the blog's cms.html
             return self.send(200, blogs.blog_html((q.get("name") or [""])[0]))
         if u.path == "/api/version":
+            features.page_seen()   # the tracker page is open -> pop-ups allowed (popups_only_when_open)
             return self.send(200, {"v": version(), "job": job_state(), "watch": features.watch_state(), "session": session_state(),
                                    "qa_all": dict(features.QA_ALL), "auto_qa": dict(features.AUTOQA)})
         if u.path == "/api/since":   # monday news since your last shift
@@ -799,7 +996,7 @@ class H(BaseHTTPRequestHandler):
             return self.send(200, buildmemory.check())
         if u.path == "/api/open-updates":   # "New version" notice in the header (2026-11-19)
             return self.send(200, features.open_updates())
-        if u.path == "/api/claude-open":   # "Open in Claude Code" button / row icon (2026-11-19)
+        if u.path == "/api/claude-open":   # "Open in VS Code" button / row icon (page folder only, 2026-11-24)
             return self.send(200, claude_open(body.get("sid"), body.get("dealer")))
         if u.path == "/api/run":
             return self.send(200, run_action(body.get("action"), body.get("sid")))
@@ -921,6 +1118,7 @@ if __name__ == "__main__":
         print("reattach skipped:", e, flush=True)
     threading.Thread(target=features.watcher, args=(lambda: job_state()["running"] and JOB.get("action") == "refresh",),
                      daemon=True).start()              # auto-update from monday + pop-ups (Settings tab)
+    threading.Thread(target=chain_loop, daemon=True).start()   # Start queue: next run when one ends (2026-11-25)
     threading.Thread(target=blogs.watch_loop, args=(features, settings), daemon=True).start()   # blog pop-ups (2026-11-17)
     threading.Thread(target=features.auto_qa_loop, args=(STATE, lambda: job_state()["running"] and JOB.get("claude")),
                      daemon=True).start()              # QA sweep by itself on ready pages that changed (2026-11-14)

@@ -18,6 +18,9 @@ KIT = Path(__file__).resolve().parent
 
 
 def fill(text: str, p: dict) -> str:
+    # page font = the Figma font (user 2026-11-25: "always use the font that the figma design uses"), never a Roboto default:
+    # project.json "font" if set, else a visible placeholder the build must replace (qa_sweep.js flags it and any Roboto not in the Figma)
+    text = text.replace('"Roboto",Arial', '"%s",Arial' % (p.get("font") or "SET-FIGMA-FONT"))
     return (text.replace("{{ID}}", p["id"]).replace("{{P}}", p["prefix"])
             .replace("{{NAME}}", p["name"]).replace("{{CDN}}", p.get("cdn", "")))
 
@@ -70,8 +73,10 @@ def main() -> None:
             f"<title>{proj['title']}, {proj['dealer']} - preview</title>\n"
             "<style>html,body{margin:0;padding:0;}</style>\n</head>\n<body>\n"
             f"<div class=\"main-div\" id=\"{proj['id']}\">\n"
-            "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400&amp;display=swap\">\n"
-            f"<style>\n{css.strip()}\n</style>\n<div class=\"{P}-wrap\">\n</div>\n<script>\n{js.strip()}\n</script>\n</div>\n</body>\n</html>\n",
+            # Google Fonts link only for the Figma font when it is a Google font (project.json "font_google": true) - no Roboto default
+            + (("<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=%s:wght@300;400;500;700&amp;display=swap\">\n"
+                % proj["font"].replace(" ", "+")) if proj.get("font") and proj.get("font_google") else "")
+            + f"<style>\n{css.strip()}\n</style>\n<div class=\"{P}-wrap\">\n</div>\n<script>\n{js.strip()}\n</script>\n</div>\n</body>\n</html>\n",
             encoding="utf8")
     print(f"ready: {root}  (id {proj['id']}, prefix {proj['prefix']}-, platform {proj['platform']})")
 

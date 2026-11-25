@@ -22,6 +22,10 @@ import re
 import os
 from datetime import date, datetime, timedelta
 
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # run with python -I: the script folder is not on the path
+import settings  # noqa: E402  (page folders, 2026-11-24)
+
 from openpyxl import Workbook, load_workbook
 from openpyxl.comments import Comment
 from openpyxl.formatting.rule import CellIsRule
@@ -229,6 +233,10 @@ def write_state(items, prev, data, platforms):
     for i in items:
         p = prev.get(i["subitem_id"]) or {}
         rec = {k: _ser(p.get(k)) for k in PREV_KEYS}
+        # the page's own folder, also when no note saved it (2026-11-24: "QA not run" although preview.html was there)
+        f = settings.page_folder(i["dealer"], i["mlp"], i.get("type", "MLP"), rec.get("folder"))
+        if f:
+            rec["folder"] = str(f)
         due = to_date(i["due"]) if i.get("due") else None
         rec.update({"subitem_id": i["subitem_id"], "item_id": i.get("item_id"), "board_id": i.get("board_id"), "dealer": i["dealer"],
                     "mlp": i["mlp"], "type": i.get("type", "MLP"), "status": i["status"], "monday_read": i.get("monday_read", i["status"]),
@@ -239,7 +247,7 @@ def write_state(items, prev, data, platforms):
                     "days_left": (due - today).days if due else None,
                     "monday_url": MONDAY.format(board=i.get("board_id"), item=i.get("item_id")),
                     "next_step": _next_step({"dealer": i["dealer"], "mlp": i["mlp"], "monday": i["status"], "claude": i["claude"],
-                                             "questions": p.get("questions"), "answers": p.get("answers"), "folder": p.get("folder"),
+                                             "questions": p.get("questions"), "answers": p.get("answers"), "folder": rec.get("folder"),
                                              "platform": platform_for(i["dealer"], platforms),
                                              "posted": _ser(p.get("posted")), "finished": _ser(p.get("finished"))})})
         out.append(rec)
