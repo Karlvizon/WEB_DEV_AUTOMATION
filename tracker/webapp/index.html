@@ -547,6 +547,7 @@ html[data-theme="dark"] .ctag{background:#1F2937;color:#D0D5DD}
 .bcard h3 .mlink:hover{color:var(--ink);border-color:var(--muted)}.bnone a{color:inherit;text-decoration:none}.bnone a:hover b{text-decoration:underline}
 .bgstart{margin-left:6px;font:700 11px/1 inherit;text-transform:none;letter-spacing:0;padding:5px 10px;border-radius:6px;border:0;background:#16a34a;color:#fff;cursor:pointer}.bgstart:disabled{opacity:.45;cursor:default}.bgstart.on{background:var(--line);color:var(--ink);cursor:default}.bgnone{margin-left:6px;font-size:11px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted)}
 .bnoauto{margin-left:6px;font-size:10.5px;font-weight:700;text-transform:none;letter-spacing:0;color:#b45309;background:#fef3c7;border-radius:6px;padding:3px 8px}
+.bsec.bhold{color:#475467}
 .bgroup{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 8px;display:flex;gap:6px;align-items:center}.bgroup:first-of-type{margin-top:4px}
 .bsec{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:10px 0 2px}
 .bline{padding:6px 0;border-top:1px solid var(--line)}.bsec+.bline,.bsec+.brow,summary+.bline{border-top:0}
@@ -1804,7 +1805,7 @@ async function assignedView(){
 // Dealer list: ../blog_dealers.json. Dealers with blogs get a card; the rest sit on one line; other dealers' blogs are folded.
 let BLOGS=null,BFRESH=0,BFILT="all";try{BFILT=localStorage.bfilt||"all"}catch(e){}
 // blog status colours (monday blog boards)
-const BSC={"Published":"var(--approved)","For Web Posting":"var(--revision)","For Galaxy Posting":"#7A5AF8","For Lead Review":"var(--review)","For SEO Review":"var(--review)",
+const BSC={"On Hold":"#475467","Published":"var(--approved)","For Web Posting":"var(--revision)","For Galaxy Posting":"#7A5AF8","For Lead Review":"var(--review)","For SEO Review":"var(--review)",
  "SEO Approved":"#0E9384","On Hold":"var(--hold)","Needs Writer Revision":"var(--stuck)","Working - Content":"var(--working)"};
 async function blogsView(){
  if(!BLOGS){$("#view").innerHTML='<div class="small">Reading the blogs folder and monday...</div>';await loadBlogs();if(!BLOGS){$("#view").innerHTML='<div class="card">Could not read the blogs folder.</div>';return}if(tab!=="blogs")return}
@@ -1814,7 +1815,7 @@ async function blogsView(){
  // keeps saying For SEO Review ("it must still show SEO review but can be publish") + a small "can publish" tag
  // rule 2026-11-20 (user): For SEO Review + a live link = done (not your turn, listed with Published)
  const chip=(st,turn,done)=>{if(!st)return"";const seo=st==="For SEO Review";
-  return `<span class="mst bchip" style="--mc:${BSC[st]||"#98A2B3"}" title="${seo?(done?"monday status: For SEO Review - it already has a live link, so it counts as done":"monday status: For SEO Review - you can already publish it (rule since Nov 19)"):"monday status"}">${turn?"Your turn · ":""}${esc(st)}</span>${seo?(done?'<span class="bcanpub bdone" title="For SEO Review with a live link counts as done (rule since Nov 20)">done · live</span>':'<span class="bcanpub" title="For SEO Review blogs can be published now (rule since Nov 19)">can publish</span>'):""}`};
+  return `<span class="mst bchip" style="--mc:${BSC[st]||"#98A2B3"}" title="${seo?(done?"monday status: For SEO Review - it already has a live link, so it counts as done":"monday status: For SEO Review - you can already publish it (rule since Nov 19)"):"monday status"}">${turn?"Your turn · ":""}${st==="On Hold"?"⏸ ":""}${esc(st)}</span>${seo?(done?'<span class="bcanpub bdone" title="For SEO Review with a live link counts as done (rule since Nov 20)">done · live</span>':'<span class="bcanpub" title="For SEO Review blogs can be published now (rule since Nov 19)">can publish</span>'):""}`};
  const late=x=>x.turn&&x.date&&x.date<today;   // red "late" only when it is on you (2026-11-17)
  const when=x=>x.date?`<span class="${late(x)?"blate":""}" title="Publication date on monday">${late(x)?"late · ":""}${esc(fmtDate(x.date))}</span>`:"";
  const ext=(u,l,t)=>u?`<a class="blk" href="${esc(u)}" target="_blank" rel="noopener" title="${t}">${l}</a>`:"";
@@ -1833,12 +1834,16 @@ async function blogsView(){
  const mrow=x=>`<div class="bline${x.turn?" bturn":""}"><a class="bln" href="${esc(x.url)}" target="_blank" rel="noopener" title="Open on monday${x.writer?" · writer: "+esc(x.writer):""}">${esc(x.name)}</a>
   <div class="bmeta">${chip(x.status,x.turn,x.done)}${when(x)}${ext(x.doc,"Doc","Open the Google Doc (source)")}${ext(x.live,"Live","Open the live blog")}</div>
   ${x.turn&&x.noauto?`<div class="bm"><a class="mbtn" href="${esc(x.url)}" target="_blank" rel="noopener">monday</a><span class="bnoauto" title="This dealer's CMS (DealerOn / MotiveHQ) is not compatible with automation - build and post this blog by hand">build by hand</span></div>`:x.turn?`<div class="bm"><a class="mbtn" href="${esc(x.url)}" target="_blank" rel="noopener">monday</a><button class="bbuild" onclick="blogBuild(${J(x.url)},${J(x.name)},this)" title="Claude builds it from the Google Doc: folder, images (WebP), preview.html, cms.html, then the blog check">Build it</button></div>`:""}</div>`;
- if(BFILT==="turn"&&!r.your_turn&&!ql)BFILT="all";const F=BFILT;
+ // On hold (user, 2026-11-26: "In the blogs put if they are on hold"): monday status On Hold -> own "⏸ On hold" section
+ // per dealer (not mixed into Coming up), a ⏸ chip, an "On hold" filter and a count in the top line
+ const isHold=x=>x.status==="On Hold";
+ const nHold=r.dealers.reduce((n,d)=>n+d.upcoming.filter(isHold).length+d.blogs.filter(isHold).length,0);
+ if(BFILT==="turn"&&!r.your_turn&&!ql)BFILT="all";if(BFILT==="hold"&&!nHold&&!ql)BFILT="all";const F=BFILT;
  // sorted by CMS (user, 2026-11-25: "sort the blogs base on their CMS"): biggest CMS group first, "CMS not set" last
  const cmsN={};r.dealers.forEach(d=>{const c=d.cms||"";cmsN[c]=(cmsN[c]||0)+1});
  const cmsRank=c=>c?-cmsN[c]:1;
- const ds=[...r.dealers].sort((a,b)=>cmsRank(a.cms||"")-cmsRank(b.cms||"")||(a.cms||"").localeCompare(b.cms||"")).map((d,k)=>({...d,no:k+1,b:d.blogs.filter(b=>hit(d.name,b.title)&&(F!=="turn"||b.turn)),u:d.upcoming.filter(x=>hit(d.name,x.name)&&(F!=="turn"||x.turn)).map(x=>d.auto===false?{...x,noauto:1}:x),p:F==="all"?d.published.filter(x=>hit(d.name,x.name)):[]}))
-  .filter(d=>F==="turn"?d.b.length||d.u.length:F==="built"?d.b.length:(!ql||d.b.length||d.u.length||d.p.length));
+ const ds=[...r.dealers].sort((a,b)=>cmsRank(a.cms||"")-cmsRank(b.cms||"")||(a.cms||"").localeCompare(b.cms||"")).map((d,k)=>({...d,no:k+1,b:d.blogs.filter(b=>hit(d.name,b.title)&&(F!=="turn"||b.turn)&&(F!=="hold"||isHold(b))),u:d.upcoming.filter(x=>!isHold(x)&&F!=="hold"&&hit(d.name,x.name)&&(F!=="turn"||x.turn)).map(x=>d.auto===false?{...x,noauto:1}:x),oh:d.upcoming.filter(x=>isHold(x)&&(F==="all"||F==="hold")&&hit(d.name,x.name)),p:F==="all"?d.published.filter(x=>hit(d.name,x.name)):[]}))
+  .filter(d=>F==="turn"?d.b.length||d.u.length:F==="built"?d.b.length:F==="hold"?d.b.length||d.oh.length:(!ql||d.b.length||d.u.length||d.p.length||d.oh.length));
  const soon=ymd(new Date(Date.now()+14*864e5));
  const card=d=>{const turn=d.u.filter(x=>x.turn),upAll=d.u.filter(x=>!x.turn),up=ql?upAll:upAll.filter(x=>!x.date||x.date<=soon),later=ql?[]:upAll.filter(x=>x.date&&x.date>soon),MAX=4;
   return `<div class="bcard" id="bd-${d.no}"><h3><span class="no">${d.no}.</span>${esc(d.name)}${d.monday?`<a class="mlink" href="${esc(d.monday)}" target="_blank" rel="noopener" title="Open ${esc(d.name)}'s blog board on monday">monday ↗</a>`:""}<span class="ct" title="Blogs on monday + built">${d.total}</span></h3>
@@ -1846,13 +1851,14 @@ async function blogsView(){
   ${d.b.length?`<div class="bsec">Built</div>${d.b.map(built).join("")}`:""}
   ${up.length?`<div class="bsec">Coming up</div>${up.slice(0,ql?99:MAX).map(mrow).join("")}${!ql&&up.length>MAX?`<details class="bmore"><summary>+${up.length-MAX} more in the next 2 weeks</summary>${up.slice(MAX).map(mrow).join("")}</details>`:""}`:""}
   ${later.length?`<details class="bmore"><summary>Later (${later.length}) - after ${esc(fmtDate(soon))}</summary>${later.map(mrow).join("")}</details>`:""}
+  ${d.oh.length?`<div class="bsec bhold" title="On Hold on monday - not your turn, Claude does not build these">⏸ On hold (${d.oh.length})</div>${d.oh.map(mrow).join("")}`:""}
   ${d.p.length?`<details class="bmore"${ql?" open":""}><summary>Published / done (${d.p.length})</summary>${d.p.map(mrow).join("")}</details>`:""}
   ${!d.total?`<div class="small">No blogs on monday yet</div>`:""}</div>`};
  const oth=r.other.filter(b=>hit(b.site,b.title));
  const nb=r.dealers.reduce((n,d)=>n+d.total,0);
  const fb=(k,l,n)=>`<button class="bfb${F===k?" on":""}" onclick="BFILT='${k}';try{localStorage.bfilt='${k}'}catch(e){};blogsView()">${l}${n!==""?`<span class="ct">${n}</span>`:""}</button>`;
  const nBuilt=r.dealers.reduce((n,d)=>n+d.blogs.length,0);
- let h=`<div class="bfilt">${r.your_turn||F==="turn"?fb("turn","Your turn",r.your_turn):""}${fb("built","Built",nBuilt)}${fb("all","All","")}${r.your_turn?"":`<span class="bfnote" title="Blogs show here when monday moves them to ${esc(r.turn_labels.join(", "))}">No blogs waiting on you ✓</span>`}</div><div class="tabtools"><span class="small">${nb} blogs on monday for your ${r.dealers.length} dealerships${r.your_turn?` · <b class="blate">${r.your_turn} your turn (${esc(r.turn_labels.join(", "))})</b>`:""}</span><button class="ghost" onclick="BLOGS=null;BFRESH=1;blogsView()" title="Read the blogs folder and monday again">Refresh</button></div>`;
+ let h=`<div class="bfilt">${r.your_turn||F==="turn"?fb("turn","Your turn",r.your_turn):""}${fb("built","Built",nBuilt)}${nHold||F==="hold"?fb("hold","⏸ On hold",nHold):""}${fb("all","All","")}${r.your_turn?"":`<span class="bfnote" title="Blogs show here when monday moves them to ${esc(r.turn_labels.join(", "))}">No blogs waiting on you ✓</span>`}</div><div class="tabtools"><span class="small">${nb} blogs on monday for your ${r.dealers.length} dealerships${r.your_turn?` · <b class="blate">${r.your_turn} your turn (${esc(r.turn_labels.join(", "))})</b>`:""}${nHold?` · <span title="Blogs with the monday status On Hold">⏸ ${nHold} on hold</span>`:""}</span><button class="ghost" onclick="BLOGS=null;BFRESH=1;blogsView()" title="Read the blogs folder and monday again">Refresh</button></div>`;
  if(r.monday_error)h+=`<div class="small" style="margin-bottom:8px">monday could not be read (lists may be old): ${esc(r.monday_error)}</div>`;
  if(!r.found)h+=`<div class="card">The blogs folder was not found: ${esc(r.folder)}. Set "folder" in blog_dealers.json.</div>`;
  const tn=ds.map(d=>({d,n:d.u.filter(x=>x.turn).length+d.b.filter(b=>b.turn).length})).filter(x=>x.n);

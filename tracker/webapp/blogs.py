@@ -186,6 +186,11 @@ def auto_ok(cms):
     return not any(k in (cms or "").lower().replace(" ", "") for k in NO_AUTO)
 
 
+def on_hold(x):
+    """user, 2026-11-26: "Dont put the blogs in your turn if they are on hold" - On Hold is never your turn."""
+    return "hold" in str(x.get("status") or "").lower()
+
+
 def blogs_by_dealer(fresh=False):
     c = config()
     root = Path(c["folder"])
@@ -222,11 +227,11 @@ def blogs_by_dealer(fresh=False):
             else:
                 b["nomatch"] = bool(m.get("items"))
             b["done"] = is_done(b)
-            b["turn"] = b.get("status") in turn and not b["done"]
+            b["turn"] = b.get("status") in turn and not b["done"] and not on_hold(b)
         rest = [pick(x) for x in mine if x["url"] not in used]   # on monday, no folder yet
         for x in rest:
             x["done"] = is_done(x)
-            x["turn"] = x["status"] in turn and not x["done"]
+            x["turn"] = x["status"] in turn and not x["done"] and not on_hold(x)
         d["upcoming"] = sorted([x for x in rest if not x["done"]], key=lambda x: (not x["turn"], x["date"] or "9999"))
         d["published"] = sorted([x for x in rest if x["done"]], key=lambda x: x["date"], reverse=True)
         d["total"] = len(d["blogs"]) + len(rest)
@@ -300,9 +305,9 @@ def blog_path(name, file=None):
 
 
 def open_blog(name, what):
+    import features   # 2026-11-26 fix: Folder / Preview crashed (features was only imported for VS Code)
     if what == "vscode":   # user, 2026-11-17: "a button where it will go to the VS code project when it is built"
         import subprocess
-        import features
         p = blog_path(name)
         if not p:
             return {"error": "not found in the blogs folder"}
